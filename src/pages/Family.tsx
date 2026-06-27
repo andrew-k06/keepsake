@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useStore } from '../store'
 import { Avatar, Button, Card, Pill } from '../components/ui'
+import { UserPlus, Lock } from '../components/icons'
 
 const roleTone: Record<string, 'neutral' | 'sage' | 'clay'> = {
   owner: 'clay',
@@ -39,21 +40,19 @@ export function Family() {
     <div>
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-4xl" style={{ fontFamily: 'Georgia, serif' }}>
-            Family & loved ones
-          </h1>
+          <h1 className="text-4xl">Family & loved ones</h1>
           <p className="text-ink-soft mt-1 text-lg">
             Invite the people you trust. You choose exactly what each person can see.
           </p>
         </div>
-        <Button onClick={() => setShowInvite((s) => !s)}>＋ Invite someone</Button>
+        <Button icon={UserPlus} onClick={() => setShowInvite((s) => !s)}>
+          Invite someone
+        </Button>
       </div>
 
       {showInvite && (
         <Card className="mt-6 p-6">
-          <h2 className="text-2xl mb-4" style={{ fontFamily: 'Georgia, serif' }}>
-            Invite a family member
-          </h2>
+          <h2 className="text-2xl mb-4">Invite a family member</h2>
           <div className="grid sm:grid-cols-2 gap-4">
             <Labeled label="Their name">
               <input className={input} value={name} onChange={(e) => setName(e.target.value)} />
@@ -119,7 +118,9 @@ export function Family() {
       </div>
 
       <Card className="mt-8 p-6 bg-sage/5 flex items-start gap-4">
-        <span className="text-3xl">🔒</span>
+        <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-sage/15 text-sage-deep">
+          <Lock className="h-6 w-6" strokeWidth={2} aria-hidden="true" />
+        </span>
         <p className="text-ink-soft">
           <span className="font-semibold text-ink">Your privacy comes first.</span> Family members only
           see what you allow. You can change or remove anyone’s access at any time, and you’ll always be

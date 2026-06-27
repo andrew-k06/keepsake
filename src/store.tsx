@@ -1,9 +1,9 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
-import type { BinderState, Item, Person, EmergencyEntry } from './types'
+import type { BinderState, Item, Person, EmergencyEntry, Room } from './types'
 import { seedState } from './data/seed'
 
-const STORAGE_KEY = 'keepsake.binder.v1'
+const STORAGE_KEY = 'keepsake.binder.v2'
 
 interface StoreApi {
   state: BinderState
@@ -16,7 +16,7 @@ interface StoreApi {
   // selectors
   itemById: (id: string) => Item | undefined
   personById: (id: string) => Person | undefined
-  roomById: (id: string) => { id: string; name: string; emoji: string } | undefined
+  roomById: (id: string) => Room | undefined
   itemsInRoom: (roomId: string) => Item[]
 }
 

@@ -2,6 +2,7 @@
 
 /* ---- Keepsake warm, senior-first design tokens ---- */
 @theme {
+  /* Warm palette (unchanged hues, the heart of the brand) */
   --color-cream: #faf5ec;
   --color-cream-deep: #f3ebdc;
   --color-ink: #2c2620;
@@ -12,8 +13,31 @@
   --color-sage: #4a7c6a;
   --color-sage-deep: #356152;
   --color-line: #e6dcc9;
+  /* a slightly stronger line for emphasis borders */
+  --color-line-strong: #d8cbb1;
+
   --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --font-serif: 'Georgia', 'Times New Roman', serif;
+
+  /* Consistent radii */
+  --radius-xl: 1rem;
+  --radius-2xl: 1.25rem;
+  --radius-3xl: 1.75rem;
+
+  /* Soft, warm-tinted shadows (no harsh grey) */
+  --shadow-soft: 0 1px 2px rgba(44, 38, 32, 0.04), 0 4px 14px rgba(44, 38, 32, 0.06);
+  --shadow-lift: 0 2px 6px rgba(44, 38, 32, 0.06), 0 14px 30px rgba(44, 38, 32, 0.1);
+
+  /* Senior-first type scale */
+  --text-xs: 0.8125rem;
+  --text-sm: 0.9375rem;
+  --text-base: 1.125rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.4rem;
+  --text-2xl: 1.7rem;
+  --text-3xl: 2.05rem;
+  --text-4xl: 2.6rem;
+  --text-5xl: 3.2rem;
 }
 
 :root {
@@ -28,20 +52,23 @@ body,
 
 body {
   margin: 0;
-  background: var(--color-cream);
+  background:
+    radial-gradient(1200px 600px at 100% -10%, #fdfaf3 0%, transparent 60%),
+    var(--color-cream);
   color: var(--color-ink);
   font-family: var(--font-sans);
   /* senior-first: large base type, generous line height */
   font-size: 18px;
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 /* Larger, comfortable focus rings for accessibility */
 *:focus-visible {
   outline: 3px solid var(--color-sage);
   outline-offset: 2px;
-  border-radius: 6px;
+  border-radius: 8px;
 }
 
 h1,
@@ -49,5 +76,26 @@ h2,
 h3 {
   font-family: var(--font-serif);
   color: var(--color-ink);
-  line-height: 1.2;
+  line-height: 1.18;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
 }
+
+h1 {
+  font-size: var(--text-4xl);
+}
+h2 {
+  font-size: var(--text-3xl);
+}
+h3 {
+  font-size: var(--text-xl);
+}
+
+/* Images never overflow their rounded containers */
+img {
+  max-width: 100%;
+  display: block;
+}
+
+/* The --shadow-soft / --shadow-lift theme tokens above generate the
+   `shadow-soft` and `shadow-lift` Tailwind utilities automatically. */
