@@ -1,0 +1,53 @@
+@import 'tailwindcss';
+
+/* ---- Keepsake warm, senior-first design tokens ---- */
+@theme {
+  --color-cream: #faf5ec;
+  --color-cream-deep: #f3ebdc;
+  --color-ink: #2c2620;
+  --color-ink-soft: #6b6157;
+  --color-clay: #c2603d;
+  --color-clay-dark: #a44c2d;
+  --color-amber: #d99a3f;
+  --color-sage: #4a7c6a;
+  --color-sage-deep: #356152;
+  --color-line: #e6dcc9;
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-serif: 'Georgia', 'Times New Roman', serif;
+}
+
+:root {
+  color-scheme: light;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-cream);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  /* senior-first: large base type, generous line height */
+  font-size: 18px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Larger, comfortable focus rings for accessibility */
+*:focus-visible {
+  outline: 3px solid var(--color-sage);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-serif);
+  color: var(--color-ink);
+  line-height: 1.2;
+}
