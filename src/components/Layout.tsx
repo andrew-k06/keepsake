@@ -71,8 +71,8 @@ export function Layout({ children }: { children: ReactNode }) {
                   }`
                 }
               >
-                <Icon className="h-6 w-6" strokeWidth={2} aria-hidden="true" />
-                <span className="truncate">{n.short}</span>
+                <Icon className="h-6 w-6 shrink-0" strokeWidth={2} aria-hidden="true" />
+                <span className="text-center leading-tight">{n.short}</span>
               </NavLink>
             )
           })}

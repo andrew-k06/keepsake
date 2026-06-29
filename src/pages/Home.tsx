@@ -1,7 +1,10 @@
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useStore, money } from '../store'
-import { Button, Card } from '../components/ui'
+import { Button, Card, AppraisalBadge } from '../components/ui'
 import { ItemCard } from '../components/ItemCard'
+import { ItemVisual } from '../components/ItemVisual'
+import type { Item } from '../types'
 import {
   Plus,
   Package,
@@ -13,8 +16,13 @@ import {
   BookHeart,
   Users,
   ChevronRight,
+  LayoutGrid,
+  List,
   type LucideIcon,
 } from '../components/icons'
+
+type ViewMode = 'tile' | 'list'
+const VIEW_KEY = 'keepsake.recentView'
 
 /** Derive a calm lucide icon from a room's name (no emoji). */
 function roomIcon(name: string): LucideIcon {
@@ -29,10 +37,17 @@ function roomIcon(name: string): LucideIcon {
 export function Home() {
   const { state, itemsInRoom } = useStore()
   const navigate = useNavigate()
+  const [view, setView] = useState<ViewMode>(
+    () => (localStorage.getItem(VIEW_KEY) as ViewMode) || 'tile',
+  )
+  const setViewMode = (v: ViewMode) => {
+    setView(v)
+    localStorage.setItem(VIEW_KEY, v)
+  }
 
   const totalValue = state.items.reduce((sum, it) => sum + (it.estValue ?? 0), 0)
   const withHeir = state.items.filter((it) => it.beneficiaryId).length
-  const recent = state.items.slice(0, 4)
+  const recent = state.items.slice(0, view === 'list' ? 6 : 4)
 
   return (
     <div>
@@ -59,7 +74,7 @@ export function Home() {
 
       {/* Rooms */}
       <h2 className="mt-12 text-2xl">Rooms</h2>
-      <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {state.rooms.map((room) => {
           const count = itemsInRoom(room.id).length
           const Icon = roomIcon(room.name)
@@ -73,13 +88,13 @@ export function Home() {
                 <Icon className="h-6 w-6" strokeWidth={1.75} aria-hidden="true" />
               </span>
               <div className="min-w-0 flex-1">
-                <div className="text-lg font-semibold truncate">{room.name}</div>
+                <div className="text-lg font-semibold leading-snug">{room.name}</div>
                 <div className="text-ink-soft">
                   {count} item{count === 1 ? '' : 's'}
                 </div>
               </div>
               <ChevronRight
-                className="h-5 w-5 text-line-strong transition group-hover:text-clay"
+                className="h-5 w-5 shrink-0 text-line-strong transition group-hover:text-clay"
                 strokeWidth={2}
                 aria-hidden="true"
               />
@@ -89,8 +104,9 @@ export function Home() {
       </div>
 
       {/* Recently added */}
-      <div className="mt-12 flex items-center justify-between">
+      <div className="mt-12 flex items-center justify-between gap-4">
         <h2 className="text-2xl">Recently kept</h2>
+        {recent.length > 0 && <ViewToggle view={view} onChange={setViewMode} />}
       </div>
       {recent.length === 0 ? (
         <Card className="mt-4 p-8 text-center">
@@ -107,10 +123,16 @@ export function Home() {
             </Button>
           </div>
         </Card>
-      ) : (
+      ) : view === 'tile' ? (
         <div className="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {recent.map((it) => (
             <ItemCard key={it.id} item={it} />
+          ))}
+        </div>
+      ) : (
+        <div className="mt-4 flex flex-col gap-3">
+          {recent.map((it) => (
+            <ItemRow key={it.id} item={it} />
           ))}
         </div>
       )}
@@ -144,5 +166,74 @@ function Stat({ icon: Icon, label, value }: { icon: LucideIcon; label: string; v
       </div>
       <div className="mt-2 text-3xl font-semibold">{value}</div>
     </Card>
+  )
+}
+
+/** Segmented control to switch the Recently kept section between tile and list views. */
+function ViewToggle({ view, onChange }: { view: ViewMode; onChange: (v: ViewMode) => void }) {
+  const opts: { mode: ViewMode; icon: LucideIcon; label: string }[] = [
+    { mode: 'tile', icon: LayoutGrid, label: 'Tile view' },
+    { mode: 'list', icon: List, label: 'List view' },
+  ]
+  return (
+    <div className="flex shrink-0 items-center rounded-2xl border border-line bg-white p-1 shadow-soft">
+      {opts.map(({ mode, icon: Icon, label }) => {
+        const active = view === mode
+        return (
+          <button
+            key={mode}
+            type="button"
+            onClick={() => onChange(mode)}
+            aria-pressed={active}
+            aria-label={label}
+            title={label}
+            className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-base font-semibold transition ${
+              active ? 'bg-clay text-white shadow-soft' : 'text-ink-soft hover:text-ink'
+            }`}
+          >
+            <Icon className="h-5 w-5 shrink-0" strokeWidth={2} aria-hidden="true" />
+            <span className="hidden sm:inline">{mode === 'tile' ? 'Tiles' : 'List'}</span>
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+/** Compact horizontal row used by the list view. */
+function ItemRow({ item }: { item: Item }) {
+  const { personById } = useStore()
+  const heir = item.beneficiaryId ? personById(item.beneficiaryId) : undefined
+  return (
+    <Link
+      to={`/item/${item.id}`}
+      className="group flex items-center gap-4 rounded-3xl border border-line bg-white p-4 shadow-soft transition hover:-translate-y-0.5 hover:border-line-strong hover:shadow-lift"
+    >
+      <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-2xl bg-cream-deep">
+        <ItemVisual item={item} rounded="rounded-none" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="text-lg font-semibold leading-snug">{item.name}</div>
+        <div className="text-ink-soft">
+          {item.category}
+          {heir && (
+            <>
+              {' · '}for <span className="font-semibold text-clay">{heir.name}</span>
+            </>
+          )}
+        </div>
+      </div>
+      <div className="hidden shrink-0 sm:block">
+        <AppraisalBadge status={item.appraisalStatus} />
+      </div>
+      <div className="shrink-0 text-right">
+        <div className="text-lg font-semibold">{money(item.appraisedValue ?? item.estValue)}</div>
+      </div>
+      <ChevronRight
+        className="h-5 w-5 shrink-0 text-line-strong transition group-hover:text-clay"
+        strokeWidth={2}
+        aria-hidden="true"
+      />
+    </Link>
   )
 }

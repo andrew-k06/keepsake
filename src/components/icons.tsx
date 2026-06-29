@@ -30,6 +30,8 @@ import {
   KeyRound,
   DoorOpen,
   UserPlus,
+  LayoutGrid,
+  List,
   // status + meta
   Shield,
   ShieldCheck,
@@ -85,6 +87,8 @@ export {
   KeyRound,
   DoorOpen,
   UserPlus,
+  LayoutGrid,
+  List,
   // status + meta
   Shield,
   ShieldCheck,
