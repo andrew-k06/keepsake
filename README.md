@@ -1,50 +1,79 @@
 # Keepsake — interactive prototype
 
 A warm, senior-first **digital heirloom binder**: aging homeowners photograph and archive their
-valuables, capture the *story* behind each one, assign them to loved ones, get them appraised/insured,
-and leave a calm "in an emergency" guide — a gift to pass on to their family.
+valuables, capture the *story* behind each one, record who they'd like each piece to go to, get
+appraisal guidance, and leave a practical "in an emergency" guide — a gift to pass on to their family.
 
-This is a **clickable demo** for walkthroughs. It runs entirely in the browser; data is saved in your
-browser's `localStorage` (no server, no account). It's built as a real React app so it's a foundation
-to keep building on.
+This is a **clickable preview** for walkthroughs. It runs entirely in the browser; data is saved
+on-device (IndexedDB, with localStorage fallback — no server, no account). It's built as a real
+React app with a repository seam so a backend can slot in without touching the pages.
+
+**A rule the whole app obeys:** it never asserts what isn't true. Simulated steps are labeled
+"Preview", insurance status is always owner-attested, wishes are never called bequests, and privacy
+copy describes what the code actually does.
 
 ## Run it
 
 ```bash
 cd keepsake
 npm install      # first time only
-npm run dev      # then open http://localhost:5173
+npm run dev      # then open http://localhost:5173/keepsake/
 ```
 
 `npm run build` makes a production bundle; `npm run preview` serves it.
 
 ## Walkthrough script (for a demo)
 
-1. **Welcome** (`/`) — the warm pitch. Click **Open Margaret's Binder**.
-2. **My Binder** — value totals, rooms, recently kept items.
-3. **Add an item** (＋) — take/choose a real photo → watch the simulated **AI auto-fill** → add the
-   **story** → assign **who it goes to** → Save. The new item persists.
-4. **Item detail** — the story, value, beneficiary picker, documents, "Get it appraised" / "insurance".
-5. **Appraisals** — photo-triage vs. items routed to an **in-person** certified appraiser.
-6. **Family** — invite children with view / edit / executor roles; privacy reassurance.
-7. **In an Emergency** — the "when I'm gone" practical guide.
-8. **For My Family** — an auto-compiled, printable summary grouped by who inherits what.
+1. **Welcome** (`/`) — two honest doors: **Start your own binder** (real onboarding, with an
+   "I'm setting it up for someone I love" gift path) or **See an example — Margaret's**.
+2. **My Binder** — stories-first stats, rooms, recently added, 30-day "Recently removed" restore.
+3. **Add an item** (＋) — photo (compressed on-device, location metadata stripped) → the
+   **explainable suggestion card** (evidence sentence, confidence in words, a range never a number,
+   and an equal-weight "No — I'll tell you what it is") → details with **voice capture**: press,
+   talk, and the story writes itself (real Web Speech API).
+4. **Item detail** — the story (editable, by voice too), family memories, facts, **"What it sells
+   for today"** (sold-price range with receipts, trend in words, the kind-decline pattern),
+   owner-attested insurance, and the **appraisal preflight** (why this tier, what it costs, who
+   sees the photos — including "you likely don't need to pay anyone for this one").
+5. **Appraisals** — photo-review vs. in-person triage and the **accredited appraiser directory**
+   (ISA/ASA/AAA, USPAP, insured, never buys what they appraise; item-scoped).
+6. **Before You Sell** (`/check`) — the scam shield: pick the item, enter the offer, get a plain
+   verdict against comps plus a face-saving doorstep script, and mention it to family in one tap.
+7. **Family** — add people with plain-language roles, the **trusted-contact protocol** (dormant
+   until verified documents + waiting period + read-only), and the activity record of every
+   important change.
+8. **In an Emergency** — guided prompt chips, editable notes, and honest access copy.
+9. **For My Family** — story-first printable summary (values hidden unless toggled), share by
+   email, plus two professional exports: a **personal property memorandum** for the attorney and a
+   **clean inventory** for estate/insurance professionals. Print styles included.
+10. **Plan** (`/plan`) — free Starter (15 items), $129 buy-once Binder, child-paid Family Plan;
+    preview checkout, no dark patterns.
 
-To reset the demo to the seeded sample, clear the site's local storage (or call `resetDemo()` — wired
-in `src/store.tsx`).
+To reset to the seeded sample, use **Start your own binder**, or clear the site's storage.
 
 ## How it's built (where to extend)
 
-- **`src/types.ts`** — the domain model (Item, Room, Person, etc.).
-- **`src/data/seed.ts`** — the sample "Margaret's Binder" content. Edit to change the demo data.
-- **`src/store.tsx`** — single source of truth (React context + localStorage). Swap this for a real
-  API/database later without touching the pages.
-- **`src/pages/`** — one file per screen. **`src/components/`** — shared UI + layout.
-- **`src/index.css`** — the warm design tokens (colors, fonts) used everywhere.
+- **`src/types.ts`** — the domain model. Values are a *history* of ranged valuations with sources;
+  items carry memories and timestamps; the binder carries a plan, an audit record, and the
+  executor-access designation.
+- **`src/data/repository.ts`** — the persistence seam (async, fallible). IndexedDB today; point it
+  at an API tomorrow without touching pages. Includes v2→v3 migration.
+- **`src/data/seed.ts`** — Margaret's sample binder. **`src/data/appraisers.ts`** — example directory.
+- **`src/store.tsx`** — single source of truth; mutations write plain-language audit lines.
+- **`src/lib/`** — the business rules, out of the pages: `value.ts` (value precedence),
+  `market.ts` (trend profiles + kind-decline copy), `appraise.ts` (routing tiers),
+  `identify.ts` (explainable suggestions), `photo.ts` (compression + EXIF stripping).
+- **`src/pages/`** — one file per screen. **`src/components/`** — shared UI, `VoiceCapture`,
+  `TrendCard`, layout. **`src/index.css`** — warm senior-first tokens + print styles.
 
 ### What's simulated (and the real version)
 
-- **AI photo identification** in *Add an item* picks from a sample list. Real version: send the photo
-  to a vision model (Claude) to identify the item, draft the description, and estimate a value range.
-- **Appraisal completion** and **insurance** are buttons that update state. Real version: connect a
-  vetted appraiser marketplace and insurance referral partners.
+- **Photo identification** and **market comps** are labeled example data. Real version: Claude
+  vision behind a server endpoint returning `lib/identify.ts`'s shape, and a sold-comps service
+  behind `lib/market.ts`'s shape.
+- **Checkout, appraiser booking, and invitations** are labeled previews. Real version: Stripe, a
+  credentialed marketplace, and account-backed sharing via the repository seam.
+- **Voice capture is real** (browser Web Speech API), as are printing, the memorandum/inventory
+  exports, mailto sharing, soft-delete/restore, and on-device persistence.
+
+Full seven-lens review and roadmap: `docs/review-2026-07/`.

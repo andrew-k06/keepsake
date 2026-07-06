@@ -326,17 +326,24 @@ export function AddItem() {
             </select>
           </Field>
 
-          <Field label="Tell its story">
+          {/* Not a <Field>: a button may not live inside a <label> (it breaks
+              the accessibility tree and click routing), so the voice control
+              sits between the heading and the labeled textarea. */}
+          <div className="mb-5">
+            <span className="mb-1 block font-semibold">Tell its story</span>
             <VoiceCapture
               onText={(text) => setStory((s) => (s ? `${s.trim()} ${text}` : text))}
             />
-            <textarea
-              className={`${inputClass} mt-3 min-h-28`}
-              value={story}
-              onChange={(e) => setStory(e.target.value)}
-              placeholder="Where did it come from? Why does it matter? Who should know about it?"
-            />
-          </Field>
+            <label className="mt-3 block">
+              <span className="sr-only">Its story</span>
+              <textarea
+                className={`${inputClass} min-h-28`}
+                value={story}
+                onChange={(e) => setStory(e.target.value)}
+                placeholder="Where did it come from? Why does it matter? Who should know about it?"
+              />
+            </label>
+          </div>
 
           <Field label="Who would you like this to go to? (optional)" hint="A wish you can change anytime — not a legal document.">
             <select
