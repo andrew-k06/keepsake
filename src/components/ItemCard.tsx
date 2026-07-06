@@ -29,7 +29,7 @@ export function ItemCard({ item }: { item: Item }) {
         </div>
         {heir && (
           <p className="mt-3 text-sm text-ink-soft">
-            For <span className="font-semibold text-clay">{heir.name}</span>
+            For <span className="font-semibold text-clay-dark">{heir.name}</span>
           </p>
         )}
       </div>

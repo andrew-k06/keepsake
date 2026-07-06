@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useStore, money } from '../store'
 import {
@@ -6,6 +7,7 @@ import {
   Card,
   InsuredBadge,
   Pill,
+  inputClass,
 } from '../components/ui'
 import { ItemVisual } from '../components/ItemVisual'
 import {
@@ -20,9 +22,9 @@ import {
   FileText,
   Search,
   Shield,
-  ShieldCheck,
   Trash2,
   CircleAlert,
+  Pencil,
   type LucideIcon,
 } from '../components/icons'
 
@@ -32,7 +34,21 @@ export function ItemDetail() {
   const navigate = useNavigate()
   const item = itemById(itemId)
 
-  if (!item) return <p>Item not found.</p>
+  const [editingStory, setEditingStory] = useState(false)
+  const [storyDraft, setStoryDraft] = useState('')
+  const [showInsuranceInfo, setShowInsuranceInfo] = useState(false)
+
+  if (!item) {
+    return (
+      <Card className="mx-auto mt-10 max-w-lg p-8 text-center">
+        <p className="text-xl font-semibold">We couldn’t find that item.</p>
+        <p className="mt-1 text-ink-soft">It may have been removed. Your binder is safe.</p>
+        <div className="mt-5 flex justify-center">
+          <Button onClick={() => navigate('/binder')}>Back to my binder</Button>
+        </div>
+      </Card>
+    )
+  }
   const heir = item.beneficiaryId ? personById(item.beneficiaryId) : undefined
   const room = roomById(item.roomId)
 
@@ -41,18 +57,27 @@ export function ItemDetail() {
 
   const requestAppraisal = () => {
     // Mimics triage: certain categories must be seen in person.
-    const inPerson = ['Jewelry', 'Watches', 'Collectibles']
+    const inPerson = ['Jewelry', 'Watches', 'Collectibles', 'Coins']
     updateItem(item.id, {
       appraisalStatus: inPerson.includes(item.category) ? 'needs-in-person' : 'photo-review',
     })
     navigate('/appraisals')
   }
 
+  const beginEditStory = () => {
+    setStoryDraft(item.story)
+    setEditingStory(true)
+  }
+  const saveStory = () => {
+    updateItem(item.id, { story: storyDraft })
+    setEditingStory(false)
+  }
+
   return (
     <div>
       <Link
         to={room ? `/room/${room.id}` : '/binder'}
-        className="inline-flex items-center gap-1.5 text-ink-soft hover:text-ink transition"
+        className="inline-flex min-h-11 items-center gap-1.5 py-2 text-ink-soft hover:text-ink transition"
       >
         <ChevronLeft className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
         Back{room ? ` to ${room.name}` : ''}
@@ -73,8 +98,8 @@ export function ItemDetail() {
             {item.insured ? (
               <InsuredBadge />
             ) : (
-              <Pill tone="clay" icon={CircleAlert}>
-                Not insured
+              <Pill tone="neutral" icon={CircleAlert}>
+                No insurance noted
               </Pill>
             )}
             <AppraisalBadge status={item.appraisalStatus} />
@@ -85,7 +110,7 @@ export function ItemDetail() {
           <div className="mt-4 flex items-baseline gap-3">
             <span className="text-3xl font-semibold">{money(item.appraisedValue ?? item.estValue)}</span>
             <span className="text-ink-soft">
-              {item.appraisedValue ? 'appraised value' : 'estimated value'}
+              {item.appraisedValue ? 'appraised value' : 'your estimate'}
             </span>
           </div>
 
@@ -96,15 +121,49 @@ export function ItemDetail() {
               strokeWidth={1.5}
               aria-hidden="true"
             />
-            <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-clay">
-              <Sparkles className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden="true" />
-              Its story
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-clay-dark">
+                <Quote className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden="true" />
+                Its story
+              </div>
+              {!editingStory && (
+                <button
+                  onClick={beginEditStory}
+                  className="relative inline-flex min-h-11 items-center gap-1.5 px-2 py-2 text-sm font-semibold text-ink-soft hover:text-ink"
+                >
+                  <Pencil className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
+                  {item.story ? 'Add to it' : 'Tell it'}
+                </button>
+              )}
             </div>
-            <p className="relative mt-3 text-xl leading-relaxed text-ink">
-              <span className="font-serif text-3xl leading-none text-clay/40">&ldquo;</span>
-              {item.story}
-              <span className="font-serif text-3xl leading-none text-clay/40">&rdquo;</span>
-            </p>
+            {editingStory ? (
+              <div className="relative mt-3">
+                <textarea
+                  className={`${inputClass} min-h-32`}
+                  value={storyDraft}
+                  onChange={(e) => setStoryDraft(e.target.value)}
+                  placeholder="Where did it come from? Why does it matter?"
+                  autoFocus
+                />
+                <div className="mt-3 flex justify-end gap-3">
+                  <Button variant="ghost" onClick={() => setEditingStory(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={saveStory}>Save the story</Button>
+                </div>
+              </div>
+            ) : item.story ? (
+              <p className="relative mt-3 text-xl leading-relaxed text-ink">
+                <span className="font-serif text-3xl leading-none text-clay/40">&ldquo;</span>
+                {item.story}
+                <span className="font-serif text-3xl leading-none text-clay/40">&rdquo;</span>
+              </p>
+            ) : (
+              <p className="relative mt-3 text-ink-soft">
+                No story yet. Stories are what turn belongings into heirlooms — add a few sentences
+                whenever you’re ready.
+              </p>
+            )}
           </Card>
 
           {/* Facts */}
@@ -119,12 +178,12 @@ export function ItemDetail() {
           <div className="mt-6">
             <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-ink-soft">
               <Gift className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden="true" />
-              Who this is for
+              Who you’d like this to go to
             </div>
             <select
               value={item.beneficiaryId ?? ''}
               onChange={(e) => assignHeir(e.target.value)}
-              className="mt-2 w-full rounded-2xl border-2 border-line bg-white px-4 py-3 text-lg focus:border-clay focus:outline-none"
+              className={`mt-2 ${inputClass}`}
             >
               <option value="">Not yet decided</option>
               {state.people
@@ -139,7 +198,8 @@ export function ItemDetail() {
               <p className="mt-3 inline-flex items-center gap-2 rounded-2xl bg-sage/10 px-4 py-2.5 text-ink-soft">
                 <HeartHandshake className="h-5 w-5 shrink-0 text-sage-deep" strokeWidth={2} aria-hidden="true" />
                 <span>
-                  This will pass to <span className="font-semibold text-clay">{heir.name}</span>.
+                  Saved: your wish is for <span className="font-semibold text-clay-dark">{heir.name}</span> to
+                  have this. A wish you can change anytime — it isn’t a will.
                 </span>
               </p>
             )}
@@ -171,31 +231,61 @@ export function ItemDetail() {
             )}
           </div>
 
+          {/* Insurance — always the owner's statement, never the app's claim */}
+          <div className="mt-6">
+            <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-ink-soft">
+              <Shield className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden="true" />
+              Insurance
+            </div>
+            {item.insured ? (
+              <p className="mt-2 text-ink-soft">
+                You noted that this is insured.{' '}
+                <button
+                  onClick={() => updateItem(item.id, { insured: false })}
+                  className="font-semibold text-clay-dark underline"
+                >
+                  Change that
+                </button>
+              </p>
+            ) : (
+              <div className="mt-2 flex flex-wrap gap-3">
+                <Button variant="secondary" onClick={() => updateItem(item.id, { insured: true })}>
+                  I already have this insured
+                </Button>
+                <Button variant="ghost" onClick={() => setShowInsuranceInfo((s) => !s)}>
+                  What would insuring it involve?
+                </Button>
+              </div>
+            )}
+            {showInsuranceInfo && !item.insured && (
+              <Card className="mt-3 bg-cream p-5 text-ink-soft">
+                <p>
+                  Valuable single items are usually insured by adding a{' '}
+                  <span className="font-semibold text-ink">“scheduled item”</span> to your homeowner’s
+                  policy — your agent will ask for a description, a photo, and a recent appraisal, all of
+                  which this binder holds. Keepsake doesn’t sell insurance and can’t set it up for you;
+                  a call to your own insurance agent is the right next step.
+                </p>
+              </Card>
+            )}
+          </div>
+
           {/* Actions */}
-          <div className="mt-8 flex flex-wrap gap-3">
+          <div className="mt-8 flex flex-wrap items-center gap-3">
             {item.appraisalStatus === 'none' && (
               <Button icon={Search} onClick={requestAppraisal}>
                 Get it appraised
-              </Button>
-            )}
-            {!item.insured ? (
-              <Button
-                variant="secondary"
-                icon={Shield}
-                onClick={() => updateItem(item.id, { insured: true })}
-              >
-                Look into insurance
-              </Button>
-            ) : (
-              <Button variant="secondary" icon={ShieldCheck} disabled>
-                Insured
               </Button>
             )}
             <Button
               variant="ghost"
               icon={Trash2}
               onClick={() => {
-                if (confirm(`Remove "${item.name}" from the binder?`)) {
+                if (
+                  confirm(
+                    `Remove "${item.name}" from the binder? You can bring it back from Recently removed for 30 days.`,
+                  )
+                ) {
                   deleteItem(item.id)
                   navigate('/binder')
                 }

@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useStore } from '../store'
-import { Avatar, Button, Card, Pill } from '../components/ui'
-import { UserPlus, Lock } from '../components/icons'
+import { Avatar, Button, Card, Field, Pill, inputClass } from '../components/ui'
+import { UserPlus, Lock, Trash2 } from '../components/icons'
+import type { Person } from '../types'
 
 const roleTone: Record<string, 'neutral' | 'sage' | 'clay'> = {
   owner: 'clay',
@@ -10,30 +11,61 @@ const roleTone: Record<string, 'neutral' | 'sage' | 'clay'> = {
   executor: 'clay',
 }
 
+const roleLabel = (role: Person['role']) =>
+  role === 'owner'
+    ? 'You'
+    : role === 'collaborator'
+      ? 'Can help add & edit'
+      : role === 'executor'
+        ? 'Trusted contact'
+        : 'Can view'
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
 export function Family() {
-  const { state, addPerson } = useStore()
+  const { state, addPerson, updatePerson, removePerson } = useStore()
   const [showInvite, setShowInvite] = useState(false)
   const [name, setName] = useState('')
+  const [nameError, setNameError] = useState('')
   const [relationship, setRelationship] = useState('')
   const [email, setEmail] = useState('')
+  const [emailError, setEmailError] = useState('')
   const [role, setRole] = useState<'collaborator' | 'viewer' | 'executor'>('viewer')
 
   const colors = ['#4a7c6a', '#d99a3f', '#c2603d', '#6b6157', '#356152']
 
   const invite = () => {
-    if (!name) return
+    let ok = true
+    if (!name.trim()) {
+      setNameError('Please add their name.')
+      ok = false
+    }
+    if (email && !EMAIL_RE.test(email)) {
+      setEmailError('That email doesn’t look complete — for example, sarah@example.com.')
+      ok = false
+    }
+    if (!ok) return
     addPerson({
-      name,
-      relationship: relationship || 'Family',
-      email,
+      name: name.trim(),
+      relationship: relationship.trim() || 'Family',
+      email: email.trim() || undefined,
       role,
       color: colors[state.people.length % colors.length],
-      invited: true,
     })
     setName('')
     setRelationship('')
     setEmail('')
     setShowInvite(false)
+  }
+
+  const remove = (p: Person) => {
+    if (
+      window.confirm(
+        `Remove ${p.name} from your binder? Any items you wished for them will go back to “Not yet decided.”`,
+      )
+    ) {
+      removePerson(p.id)
+    }
   }
 
   return (
@@ -42,76 +74,107 @@ export function Family() {
         <div>
           <h1 className="text-4xl">Family & loved ones</h1>
           <p className="text-ink-soft mt-1 text-lg">
-            Invite the people you trust. You choose exactly what each person can see.
+            Add the people you trust, so you can assign keepsakes and print a summary for them.
           </p>
         </div>
         <Button icon={UserPlus} onClick={() => setShowInvite((s) => !s)}>
-          Invite someone
+          Add someone
         </Button>
       </div>
 
       {showInvite && (
         <Card className="mt-6 p-6">
-          <h2 className="text-2xl mb-4">Invite a family member</h2>
+          <h2 className="text-2xl mb-4">Add a family member</h2>
           <div className="grid sm:grid-cols-2 gap-4">
-            <Labeled label="Their name">
-              <input className={input} value={name} onChange={(e) => setName(e.target.value)} />
-            </Labeled>
-            <Labeled label="Relationship">
+            <Field label="Their name" error={nameError}>
               <input
-                className={input}
+                className={inputClass}
+                value={name}
+                onChange={(e) => {
+                  setName(e.target.value)
+                  if (e.target.value.trim()) setNameError('')
+                }}
+              />
+            </Field>
+            <Field label="Relationship">
+              <input
+                className={inputClass}
                 value={relationship}
                 onChange={(e) => setRelationship(e.target.value)}
                 placeholder="Daughter, Son, Friend…"
               />
-            </Labeled>
-            <Labeled label="Email">
+            </Field>
+            <Field label="Email (optional)" error={emailError}>
               <input
-                className={input}
+                className={inputClass}
+                type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value)
+                  setEmailError('')
+                }}
                 placeholder="name@example.com"
               />
-            </Labeled>
-            <Labeled label="What can they do?">
-              <select className={input} value={role} onChange={(e) => setRole(e.target.value as typeof role)}>
+            </Field>
+            <Field label="What can they do?">
+              <select className={inputClass} value={role} onChange={(e) => setRole(e.target.value as typeof role)}>
                 <option value="viewer">View only</option>
                 <option value="collaborator">Help me add & edit</option>
-                <option value="executor">Executor (access in an emergency)</option>
+                <option value="executor">Trusted contact (emergency access)</option>
               </select>
-            </Labeled>
+            </Field>
           </div>
+          <p className="mt-2 text-sm text-ink-soft">
+            In this preview, no email is sent — you’re adding them to your binder so you can assign
+            items and print a summary for them. Online sharing and invitations come with the full app.
+          </p>
           <div className="mt-5 flex justify-end gap-3">
             <Button variant="ghost" onClick={() => setShowInvite(false)}>
               Cancel
             </Button>
-            <Button onClick={invite}>Send invitation</Button>
+            <Button onClick={invite}>Add to my binder</Button>
           </div>
         </Card>
       )}
 
       <div className="mt-6 space-y-3">
         {state.people.map((p) => (
-          <Card key={p.id} className="p-5 flex items-center gap-4">
+          <Card key={p.id} className="p-5 flex flex-wrap items-center gap-4">
             <Avatar name={p.name} color={p.color} />
-            <div className="flex-1">
+            <div className="min-w-0 flex-1">
               <div className="text-lg font-semibold">
                 {p.name}{' '}
                 {p.relationship !== 'Me' && <span className="text-ink-soft font-normal">· {p.relationship}</span>}
               </div>
               {p.email && <div className="text-ink-soft text-sm">{p.email}</div>}
             </div>
-            <div className="flex items-center gap-2">
-              {p.invited && <Pill>Invitation sent</Pill>}
-              <Pill tone={roleTone[p.role]}>
-                {p.role === 'owner'
-                  ? 'You'
-                  : p.role === 'collaborator'
-                    ? 'Can edit'
-                    : p.role === 'executor'
-                      ? 'Executor'
-                      : 'Can view'}
-              </Pill>
+            <div className="flex flex-wrap items-center gap-2">
+              {p.role === 'owner' ? (
+                <Pill tone={roleTone[p.role]}>{roleLabel(p.role)}</Pill>
+              ) : (
+                <>
+                  <label className="sr-only" htmlFor={`role-${p.id}`}>
+                    What {p.name} can do
+                  </label>
+                  <select
+                    id={`role-${p.id}`}
+                    value={p.role}
+                    onChange={(e) => updatePerson(p.id, { role: e.target.value as Person['role'] })}
+                    className="rounded-xl border-2 border-line bg-white px-3 py-2 text-sm font-semibold focus:border-clay outline-none"
+                  >
+                    <option value="viewer">Can view</option>
+                    <option value="collaborator">Can help add & edit</option>
+                    <option value="executor">Trusted contact</option>
+                  </select>
+                  <button
+                    onClick={() => remove(p)}
+                    className="inline-flex min-h-11 items-center gap-1 rounded-xl px-2 py-2 text-sm font-semibold text-ink-soft hover:text-clay-dark"
+                  >
+                    <Trash2 className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
+                    Remove
+                  </button>
+                </>
+              )}
             </div>
           </Card>
         ))}
@@ -122,22 +185,12 @@ export function Family() {
           <Lock className="h-6 w-6" strokeWidth={2} aria-hidden="true" />
         </span>
         <p className="text-ink-soft">
-          <span className="font-semibold text-ink">Your privacy comes first.</span> Family members only
-          see what you allow. You can change or remove anyone’s access at any time, and you’ll always be
-          able to see who has looked at your binder.
+          <span className="font-semibold text-ink">Your privacy comes first.</span> Right now your
+          binder lives only on this device — no one can see it unless you show them or print it. You
+          can change what anyone here can do, or remove them, at any time. When online sharing
+          arrives, each person will see only what you allow.
         </p>
       </Card>
     </div>
-  )
-}
-
-const input = 'w-full rounded-2xl border-2 border-line bg-white px-4 py-3 text-lg focus:border-clay outline-none'
-
-function Labeled({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label className="block">
-      <span className="mb-1 block font-semibold">{label}</span>
-      {children}
-    </label>
   )
 }

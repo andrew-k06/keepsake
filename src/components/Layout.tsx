@@ -5,7 +5,7 @@ import {
   BookHeart,
   Home,
   Users,
-  Search,
+  BadgeCheck,
   LifeBuoy,
   HeartHandshake,
   type LucideIcon,
@@ -18,22 +18,37 @@ interface NavEntry {
   icon: LucideIcon
 }
 
+// Note: Appraisals deliberately does NOT use a magnifying-glass icon — that
+// reads as "search" and earns mis-taps. Each short label is unique.
 const nav: NavEntry[] = [
   { to: '/binder', label: 'My Binder', short: 'Binder', icon: Home },
   { to: '/family', label: 'Family', short: 'Family', icon: Users },
-  { to: '/appraisals', label: 'Appraisals', short: 'Appraise', icon: Search },
+  { to: '/appraisals', label: 'Appraisals', short: 'Appraise', icon: BadgeCheck },
   { to: '/emergency', label: 'In an Emergency', short: 'Emergency', icon: LifeBuoy },
-  { to: '/summary', label: 'For My Family', short: 'Family', icon: HeartHandshake },
+  { to: '/summary', label: 'For My Family', short: 'Summary', icon: HeartHandshake },
 ]
 
 export function Layout({ children }: { children: ReactNode }) {
-  const { state } = useStore()
+  const { state, saveError } = useStore()
   const location = useLocation()
-  // The welcome screen is full-bleed, no chrome.
-  if (location.pathname === '/') return <>{children}</>
+  // Full-bleed screens (welcome, onboarding, printable documents) get no chrome.
+  if (
+    location.pathname === '/' ||
+    location.pathname === '/start' ||
+    location.pathname.startsWith('/print')
+  )
+    return <>{children}</>
 
   return (
     <div className="min-h-full md:flex">
+      {saveError && (
+        <div
+          role="alert"
+          className="print-hidden fixed inset-x-0 top-0 z-50 border-b-2 border-clay-dark bg-clay/10 px-5 py-3 text-center font-semibold text-clay-dark backdrop-blur"
+        >
+          {saveError}
+        </div>
+      )}
       {/* Sidebar (desktop) */}
       <aside className="hidden md:flex w-72 shrink-0 flex-col border-r border-line bg-white/70 backdrop-blur-sm p-5">
         <Brand />
@@ -67,7 +82,7 @@ export function Layout({ children }: { children: ReactNode }) {
                 to={n.to}
                 className={({ isActive }) =>
                   `flex flex-1 flex-col items-center gap-1 rounded-xl px-1 py-1.5 text-xs font-semibold ${
-                    isActive ? 'text-clay' : 'text-ink-soft'
+                    isActive ? 'text-clay-dark' : 'text-ink-soft'
                   }`
                 }
               >

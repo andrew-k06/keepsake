@@ -7,10 +7,7 @@ import { ItemVisual } from '../components/ItemVisual'
 import type { Item } from '../types'
 import {
   Plus,
-  Package,
-  Armchair,
-  DoorOpen,
-  Lock,
+  Quote,
   HeartHandshake,
   ArrowRight,
   BookHeart,
@@ -18,24 +15,16 @@ import {
   ChevronRight,
   LayoutGrid,
   List,
+  Undo2,
+  roomIcon,
   type LucideIcon,
 } from '../components/icons'
 
 type ViewMode = 'tile' | 'list'
 const VIEW_KEY = 'keepsake.recentView'
 
-/** Derive a calm lucide icon from a room's name (no emoji). */
-function roomIcon(name: string): LucideIcon {
-  const n = name.toLowerCase()
-  if (n.includes('safe') || n.includes('vault')) return Lock
-  if (n.includes('living') || n.includes('lounge') || n.includes('parlor')) return Armchair
-  if (n.includes('garage') || n.includes('shed') || n.includes('attic') || n.includes('basement'))
-    return Package
-  return DoorOpen
-}
-
 export function Home() {
-  const { state, itemsInRoom } = useStore()
+  const { state, itemsInRoom, restoreItem } = useStore()
   const navigate = useNavigate()
   const [view, setView] = useState<ViewMode>(
     () => (localStorage.getItem(VIEW_KEY) as ViewMode) || 'tile',
@@ -45,9 +34,10 @@ export function Home() {
     localStorage.setItem(VIEW_KEY, v)
   }
 
-  const totalValue = state.items.reduce((sum, it) => sum + (it.estValue ?? 0), 0)
+  const withStory = state.items.filter((it) => it.story.trim()).length
   const withHeir = state.items.filter((it) => it.beneficiaryId).length
   const recent = state.items.slice(0, view === 'list' ? 6 : 4)
+  const trash = state.trash ?? []
 
   return (
     <div>
@@ -61,13 +51,13 @@ export function Home() {
         </Button>
       </div>
 
-      {/* Stats */}
+      {/* Stats — stories and wishes lead; money never headlines the binder */}
       <div className="mt-8 grid gap-4 sm:grid-cols-3">
-        <Stat icon={BookHeart} label="Items kept" value={String(state.items.length)} />
-        <Stat icon={Package} label="Estimated value" value={money(totalValue)} />
+        <Stat icon={BookHeart} label="Your items" value={String(state.items.length)} />
+        <Stat icon={Quote} label="Stories told" value={`${withStory} of ${state.items.length}`} />
         <Stat
           icon={Users}
-          label="Assigned to family"
+          label="Wishes decided"
           value={`${withHeir} of ${state.items.length}`}
         />
       </div>
@@ -94,7 +84,7 @@ export function Home() {
                 </div>
               </div>
               <ChevronRight
-                className="h-5 w-5 shrink-0 text-line-strong transition group-hover:text-clay"
+                className="h-5 w-5 shrink-0 text-ink-soft transition group-hover:text-clay-dark"
                 strokeWidth={2}
                 aria-hidden="true"
               />
@@ -105,7 +95,7 @@ export function Home() {
 
       {/* Recently added */}
       <div className="mt-12 flex items-center justify-between gap-4">
-        <h2 className="text-2xl">Recently kept</h2>
+        <h2 className="text-2xl">Recently added</h2>
         {recent.length > 0 && <ViewToggle view={view} onChange={setViewMode} />}
       </div>
       {recent.length === 0 ? (
@@ -146,13 +136,39 @@ export function Home() {
           <p className="text-lg font-semibold">Your family will treasure this.</p>
           <p className="text-ink-soft">
             When you’re ready, you can share your binder so your children understand what each thing
-            means — and what to do if something happens.
+            means — and so they always know what to do.
           </p>
         </div>
         <Button variant="secondary" icon={ArrowRight} onClick={() => navigate('/family')}>
           Invite family
         </Button>
       </Card>
+
+      {/* Recently removed — mistakes aren't forever */}
+      {trash.length > 0 && (
+        <div className="mt-10">
+          <h2 className="text-2xl">Recently removed</h2>
+          <p className="text-ink-soft">
+            Removed items stay here for 30 days, in case you change your mind.
+          </p>
+          <div className="mt-3 space-y-3">
+            {trash.map((it) => (
+              <Card key={it.id} className="flex items-center gap-4 p-4">
+                <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-2xl bg-cream-deep">
+                  <ItemVisual item={it} rounded="rounded-none" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="font-semibold">{it.name}</div>
+                  <div className="text-sm text-ink-soft">{it.category}</div>
+                </div>
+                <Button variant="secondary" icon={Undo2} onClick={() => restoreItem(it.id)}>
+                  Put it back
+                </Button>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -169,11 +185,11 @@ function Stat({ icon: Icon, label, value }: { icon: LucideIcon; label: string; v
   )
 }
 
-/** Segmented control to switch the Recently kept section between tile and list views. */
+/** Segmented control to switch the Recently added section between tile and list views. */
 function ViewToggle({ view, onChange }: { view: ViewMode; onChange: (v: ViewMode) => void }) {
   const opts: { mode: ViewMode; icon: LucideIcon; label: string }[] = [
-    { mode: 'tile', icon: LayoutGrid, label: 'Tile view' },
-    { mode: 'list', icon: List, label: 'List view' },
+    { mode: 'tile', icon: LayoutGrid, label: 'Tiles' },
+    { mode: 'list', icon: List, label: 'List' },
   ]
   return (
     <div className="flex shrink-0 items-center rounded-2xl border border-line bg-white p-1 shadow-soft">
@@ -185,14 +201,12 @@ function ViewToggle({ view, onChange }: { view: ViewMode; onChange: (v: ViewMode
             type="button"
             onClick={() => onChange(mode)}
             aria-pressed={active}
-            aria-label={label}
-            title={label}
-            className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-base font-semibold transition ${
-              active ? 'bg-clay text-white shadow-soft' : 'text-ink-soft hover:text-ink'
+            className={`flex items-center gap-2 rounded-xl px-3.5 py-3 text-base font-semibold transition ${
+              active ? 'bg-clay-dark text-white shadow-soft' : 'text-ink-soft hover:text-ink'
             }`}
           >
             <Icon className="h-5 w-5 shrink-0" strokeWidth={2} aria-hidden="true" />
-            <span className="hidden sm:inline">{mode === 'tile' ? 'Tiles' : 'List'}</span>
+            <span>{label}</span>
           </button>
         )
       })}
@@ -218,7 +232,7 @@ function ItemRow({ item }: { item: Item }) {
           {item.category}
           {heir && (
             <>
-              {' · '}for <span className="font-semibold text-clay">{heir.name}</span>
+              {' · '}for <span className="font-semibold text-clay-dark">{heir.name}</span>
             </>
           )}
         </div>
@@ -230,7 +244,7 @@ function ItemRow({ item }: { item: Item }) {
         <div className="text-lg font-semibold">{money(item.appraisedValue ?? item.estValue)}</div>
       </div>
       <ChevronRight
-        className="h-5 w-5 shrink-0 text-line-strong transition group-hover:text-clay"
+        className="h-5 w-5 shrink-0 text-ink-soft transition group-hover:text-clay-dark"
         strokeWidth={2}
         aria-hidden="true"
       />

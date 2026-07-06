@@ -35,15 +35,15 @@ export function Welcome() {
 
         <p className="mt-6 max-w-xl text-xl text-ink-soft">
           Keepsake helps you gather your treasured belongings, their stories, and your wishes — into
-          one gentle binder you can pass on to the people you love.
+          one binder you can pass on to the people you love.
         </p>
 
         <div className="mt-10 flex flex-col gap-4 sm:flex-row">
-          <Button size="lg" icon={BookHeart} onClick={() => navigate('/binder')}>
-            Open Margaret’s Binder
+          <Button size="lg" icon={BookHeart} onClick={() => navigate('/start')}>
+            Start your own binder
           </Button>
           <Button size="lg" variant="secondary" onClick={() => navigate('/binder')}>
-            Take a tour
+            See an example — Margaret’s
           </Button>
         </div>
 
@@ -76,16 +76,16 @@ export function Welcome() {
           </div>
         </div>
 
-        <p className="mt-16 inline-flex items-center gap-2 text-sm text-ink-soft">
+        <p className="mt-16 inline-flex max-w-xl items-center gap-2 text-sm text-ink-soft">
           <Lock className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden="true" />
-          Private by design. Only the people you invite can ever see your binder.
+          Your binder is saved on this device. Nothing is sent anywhere unless you choose to share it.
         </p>
 
         <button
-          onClick={() => navigate('/binder')}
-          className="mt-8 inline-flex items-center gap-1.5 text-base font-semibold text-clay transition hover:text-clay-dark"
+          onClick={() => navigate('/start')}
+          className="mt-8 inline-flex min-h-11 items-center gap-1.5 py-2 text-lg font-semibold text-clay-dark transition hover:text-ink"
         >
-          Start your own binder
+          Begin with one item — five minutes
           <ArrowRight className="h-4 w-4 shrink-0" strokeWidth={2.25} aria-hidden="true" />
         </button>
       </div>

@@ -28,7 +28,6 @@ export const seedState: BinderState = {
       role: 'viewer',
       email: 'david@example.com',
       color: '#d99a3f',
-      invited: true,
     },
   ],
   emergency: [
@@ -36,7 +35,7 @@ export const seedState: BinderState = {
       id: 'e-1',
       label: 'Where my important papers are',
       detail:
-        'The fireproof box in the bedroom closet holds my will, the deed to the house, and the insurance policies. The key is taped under the jewelry drawer.',
+        'The fireproof box in the bedroom closet holds my will, the deed to the house, and the insurance policies. Sarah knows how to open it.',
     },
     {
       id: 'e-2',
@@ -87,7 +86,7 @@ export const seedState: BinderState = {
       appraisalStatus: 'appraised',
       appraisedValue: 3600,
       documents: [
-        { id: 'd-2', type: 'appraisal', label: 'USPAP appraisal (2023)' },
+        { id: 'd-2', type: 'appraisal', label: 'Certified written appraisal (2023)' },
         { id: 'd-3', type: 'receipt', label: 'Original gallery receipt' },
       ],
       insured: true,

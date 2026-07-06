@@ -18,10 +18,13 @@ export function ItemVisual({
   item,
   className = '',
   rounded = 'rounded-3xl',
+  eager = false,
 }: {
   item: Item
   className?: string
   rounded?: string
+  /** Load immediately — required on printable views so photos aren't blank on paper. */
+  eager?: boolean
 }) {
   const src = item.photo ?? item.image
 
@@ -30,7 +33,7 @@ export function ItemVisual({
       <img
         src={src}
         alt={item.name}
-        loading="lazy"
+        loading={eager ? 'eager' : 'lazy'}
         className={`h-full w-full object-cover ${rounded} ${className}`}
       />
     )
@@ -38,7 +41,7 @@ export function ItemVisual({
 
   return (
     <div
-      className={`grid h-full w-full place-items-center bg-cream-deep text-clay/70 ${rounded} ${className}`}
+      className={`grid h-full w-full place-items-center bg-cream-deep text-clay-dark/80 ${rounded} ${className}`}
       role="img"
       aria-label={`${item.category} — no photo yet`}
     >

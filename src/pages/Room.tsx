@@ -2,25 +2,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useStore } from '../store'
 import { Button, Card } from '../components/ui'
 import { ItemCard } from '../components/ItemCard'
-import {
-  Plus,
-  Package,
-  Armchair,
-  DoorOpen,
-  Lock,
-  ChevronLeft,
-  type LucideIcon,
-} from '../components/icons'
-
-/** Derive a calm lucide icon from a room's name (no emoji). */
-function roomIcon(name: string): LucideIcon {
-  const n = name.toLowerCase()
-  if (n.includes('safe') || n.includes('vault')) return Lock
-  if (n.includes('living') || n.includes('lounge') || n.includes('parlor')) return Armchair
-  if (n.includes('garage') || n.includes('shed') || n.includes('attic') || n.includes('basement'))
-    return Package
-  return DoorOpen
-}
+import { Plus, ChevronLeft, roomIcon } from '../components/icons'
 
 export function Room() {
   const { roomId = '' } = useParams()
@@ -29,7 +11,16 @@ export function Room() {
   const room = roomById(roomId)
   const items = itemsInRoom(roomId)
 
-  if (!room) return <p className="text-ink-soft text-lg">Room not found.</p>
+  if (!room)
+    return (
+      <Card className="mx-auto mt-10 max-w-lg p-8 text-center">
+        <p className="text-xl font-semibold">We couldn’t find that room.</p>
+        <p className="mt-1 text-ink-soft">Your binder is safe.</p>
+        <div className="mt-5 flex justify-center">
+          <Button onClick={() => navigate('/binder')}>Back to my binder</Button>
+        </div>
+      </Card>
+    )
 
   const Icon = roomIcon(room.name)
 
@@ -37,7 +28,7 @@ export function Room() {
     <div>
       <Link
         to="/binder"
-        className="inline-flex items-center gap-1.5 text-ink-soft transition hover:text-ink"
+        className="inline-flex min-h-11 items-center gap-1.5 py-2 text-ink-soft transition hover:text-ink"
       >
         <ChevronLeft className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
         Back to binder

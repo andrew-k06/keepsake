@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
-import { Button, Card } from '../components/ui'
+import { Button, Card, DemoTag, Field, inputClass } from '../components/ui'
 import { ItemVisual } from '../components/ItemVisual'
 import {
   Camera,
@@ -11,9 +11,12 @@ import {
   ImagePlus,
   CircleCheckBig,
 } from '../components/icons'
+import { compressImage } from '../lib/photo'
+import { CATEGORIES } from '../types'
 import type { AppraisalStatus, Item } from '../types'
 
-// A simple "AI suggestion" pool so the demo feels magical without a backend.
+// Demo suggestion pool. In the full app a vision model studies the photo;
+// this preview shows an EXAMPLE of what that step looks like — and says so.
 const SUGGESTIONS = [
   { name: 'Diamond Ring', category: 'Jewelry', value: 4500 },
   { name: 'Framed Painting', category: 'Art', value: 1200 },
@@ -36,25 +39,36 @@ export function AddItem() {
 
   const [step, setStep] = useState<Step>('capture')
   const [photo, setPhoto] = useState<string | undefined>()
+  const [photoError, setPhotoError] = useState('')
   const [identifying, setIdentifying] = useState(false)
+  const [suggested, setSuggested] = useState(false) // AI prefilled fields, not yet user-confirmed
 
   const [name, setName] = useState('')
+  const [nameError, setNameError] = useState('')
   const [category, setCategory] = useState('')
   const [estValue, setEstValue] = useState<string>('')
-  const [roomId, setRoomId] = useState(presetRoom ?? state.rooms[0].id)
+  const [roomId, setRoomId] = useState(presetRoom ?? state.rooms[0]?.id ?? '')
   const [story, setStory] = useState('')
   const [beneficiaryId, setBeneficiaryId] = useState('')
 
-  const onPickPhoto = (file: File) => {
-    const reader = new FileReader()
-    reader.onload = () => {
-      setPhoto(reader.result as string)
+  const dirty = Boolean(photo || name || story || estValue)
+
+  const confirmLeave = () =>
+    !dirty || window.confirm('Leave without saving? The photo and anything you typed here will be discarded.')
+
+  const onPickPhoto = async (file: File) => {
+    setPhotoError('')
+    try {
+      // Downscale + re-encode: keeps storage safe and strips location metadata.
+      const dataUrl = await compressImage(file)
+      setPhoto(dataUrl)
       runIdentify()
+    } catch {
+      setPhotoError('We could not read that photo. Please try another one.')
     }
-    reader.readAsDataURL(file)
   }
 
-  // Simulate computer-vision auto-fill.
+  // Simulated identification — ONLY runs when a photo actually exists.
   const runIdentify = () => {
     setStep('identify')
     setIdentifying(true)
@@ -63,12 +77,22 @@ export function AddItem() {
       setName(pick.name)
       setCategory(pick.category)
       setEstValue(String(pick.value))
+      setSuggested(true)
       setIdentifying(false)
     }, 1600)
   }
 
-  const skipPhoto = () => {
-    runIdentify()
+  // Skipping the photo goes straight to a blank form. The app never says
+  // "looking at your photo" when there is no photo.
+  const skipPhoto = () => setStep('details')
+
+  // The user rejects the suggestion: clear everything prefilled and let them say what it is.
+  const rejectSuggestion = () => {
+    setName('')
+    setCategory('')
+    setEstValue('')
+    setSuggested(false)
+    setStep('details')
   }
 
   // A lightweight item-shaped object so <ItemVisual> can render the live preview
@@ -78,7 +102,7 @@ export function AddItem() {
     name: name || 'Your item',
     category: category || 'Other',
     roomId,
-    image: photo,
+    photo,
     story: '',
     estValue: null,
     appraisalStatus: 'none',
@@ -86,12 +110,16 @@ export function AddItem() {
   } as Item
 
   const save = () => {
+    if (!name.trim()) {
+      setNameError('Please give it a name — even something simple like “Mom’s blue vase.”')
+      return
+    }
     const appraisalStatus: AppraisalStatus = 'none'
     const id = addItem({
-      name: name || 'Untitled item',
+      name: name.trim(),
       category: category || 'Other',
       roomId,
-      image: photo,
+      photo,
       story,
       estValue: estValue ? Number(estValue) : null,
       beneficiaryId: beneficiaryId || undefined,
@@ -105,8 +133,8 @@ export function AddItem() {
   return (
     <div className="mx-auto max-w-2xl">
       <button
-        onClick={() => navigate(-1)}
-        className="inline-flex items-center gap-1 text-ink-soft hover:text-ink"
+        onClick={() => confirmLeave() && navigate(-1)}
+        className="inline-flex min-h-11 items-center gap-1 py-2 text-ink-soft hover:text-ink"
       >
         <ChevronLeft className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
         Cancel
@@ -128,9 +156,16 @@ export function AddItem() {
             <span className="grid h-20 w-20 place-items-center rounded-full bg-cream-deep text-clay">
               <Camera className="h-9 w-9" strokeWidth={1.75} aria-hidden="true" />
             </span>
-            <span className="mt-4 text-lg font-semibold text-clay">Tap to take or choose a photo</span>
-            <span className="mt-1 text-sm text-ink-soft">Your photo stays private in your binder.</span>
+            <span className="mt-4 text-lg font-semibold text-clay-dark">Tap to take or choose a photo</span>
+            <span className="mt-1 text-sm text-ink-soft">
+              Saved only on this device. We remove hidden location data from every photo.
+            </span>
           </button>
+          {photoError && (
+            <p aria-live="polite" className="mt-3 font-semibold text-clay-dark">
+              {photoError}
+            </p>
+          )}
           <input
             ref={fileRef}
             type="file"
@@ -142,7 +177,7 @@ export function AddItem() {
 
           <button
             onClick={skipPhoto}
-            className="mt-6 inline-flex items-center gap-2 text-ink-soft underline hover:text-ink"
+            className="mt-6 inline-flex min-h-11 items-center gap-2 py-2 text-ink-soft underline hover:text-ink"
           >
             <ImagePlus className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
             I’ll add a photo later
@@ -156,27 +191,33 @@ export function AddItem() {
             <div className="relative h-28 w-28 shrink-0 overflow-hidden rounded-2xl bg-cream-deep">
               <ItemVisual item={previewItem} rounded="rounded-none" />
             </div>
-            <div>
+            <div aria-live="polite">
               {identifying ? (
                 <>
                   <p className="flex items-center gap-2 text-xl font-semibold">
                     <Sparkles className="h-5 w-5 text-clay" strokeWidth={2} aria-hidden="true" />
-                    Looking at your photo…
+                    One moment…
                   </p>
-                  <p className="text-ink-soft">We’re identifying what this is and what it may be worth.</p>
+                  <p className="text-ink-soft">Preparing a suggestion to start from.</p>
                   <div className="mt-3 h-2 w-48 overflow-hidden rounded-full bg-cream-deep">
-                    <div className="h-full w-1/2 animate-pulse rounded-full bg-clay" />
+                    <div className="h-full w-1/2 animate-pulse rounded-full bg-clay-dark" />
                   </div>
                 </>
               ) : (
                 <>
                   <p className="flex items-center gap-2 text-xl font-semibold">
                     <Sparkles className="h-5 w-5 text-clay" strokeWidth={2} aria-hidden="true" />
-                    Here’s what we found
+                    Here’s a starting point
                   </p>
                   <p className="text-ink-soft">
-                    We think this is a <span className="font-semibold text-ink">{name}</span>. You can
-                    change anything below.
+                    Our guess: a <span className="font-semibold text-ink">{name}</span>. You know your
+                    things better than we do — if that’s wrong, just say so.
+                  </p>
+                  <p className="mt-2">
+                    <DemoTag>Preview — example suggestion</DemoTag>
+                  </p>
+                  <p className="mt-1 text-sm text-ink-soft">
+                    In the full app, an AI assistant studies your photo and explains what it sees.
                   </p>
                 </>
               )}
@@ -184,9 +225,12 @@ export function AddItem() {
           </div>
 
           {!identifying && (
-            <div className="mt-6 text-right">
+            <div className="mt-6 flex flex-wrap justify-end gap-3">
+              <Button variant="secondary" onClick={rejectSuggestion}>
+                No — I’ll tell you what it is
+              </Button>
               <Button icon={ArrowRight} onClick={() => setStep('details')}>
-                Looks good — continue
+                That’s right — continue
               </Button>
             </div>
           )}
@@ -195,27 +239,47 @@ export function AddItem() {
 
       {step === 'details' && (
         <Card className="mt-6 p-7">
-          <Field label="What is it?">
-            <input className={input} value={name} onChange={(e) => setName(e.target.value)} />
+          {suggested && (
+            <p className="mb-5 rounded-2xl bg-amber/15 px-4 py-3 text-sm text-ink-soft">
+              We suggested the name, category, and value below — please check them and change anything
+              that isn’t right.
+            </p>
+          )}
+          <Field label="What is it?" error={nameError}>
+            <input
+              className={inputClass}
+              value={name}
+              onChange={(e) => {
+                setName(e.target.value)
+                if (e.target.value.trim()) setNameError('')
+              }}
+            />
           </Field>
 
-          <div className="grid sm:grid-cols-2 gap-5">
+          <div className="grid gap-5 sm:grid-cols-2">
             <Field label="Category">
-              <input className={input} value={category} onChange={(e) => setCategory(e.target.value)} />
+              <select className={inputClass} value={category} onChange={(e) => setCategory(e.target.value)}>
+                <option value="">Choose one…</option>
+                {CATEGORIES.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
             </Field>
-            <Field label="Estimated value (optional)">
+            <Field label="Estimated value (optional)" hint="Dollars, numbers only — for example 1200.">
               <input
-                className={input}
+                className={inputClass}
                 inputMode="numeric"
                 value={estValue}
                 onChange={(e) => setEstValue(e.target.value.replace(/[^0-9]/g, ''))}
-                placeholder="$"
+                placeholder="1200"
               />
             </Field>
           </div>
 
           <Field label="Which room?">
-            <select className={input} value={roomId} onChange={(e) => setRoomId(e.target.value)}>
+            <select className={inputClass} value={roomId} onChange={(e) => setRoomId(e.target.value)}>
               {state.rooms.map((r) => (
                 <option key={r.id} value={r.id}>
                   {r.name}
@@ -226,19 +290,16 @@ export function AddItem() {
 
           <Field label="Tell its story">
             <textarea
-              className={`${input} min-h-28`}
+              className={`${inputClass} min-h-28`}
               value={story}
               onChange={(e) => setStory(e.target.value)}
               placeholder="Where did it come from? Why does it matter? Who should know about it?"
             />
-            <p className="mt-1 text-sm text-ink-soft">
-              Tip: in the real app you can simply <em>speak</em> and we’ll write it down for you.
-            </p>
           </Field>
 
-          <Field label="Who would you like this to go to? (optional)">
+          <Field label="Who would you like this to go to? (optional)" hint="A wish you can change anytime — not a legal document.">
             <select
-              className={input}
+              className={inputClass}
               value={beneficiaryId}
               onChange={(e) => setBeneficiaryId(e.target.value)}
             >
@@ -254,7 +315,7 @@ export function AddItem() {
           </Field>
 
           <div className="mt-6 flex justify-end gap-3">
-            <Button variant="ghost" onClick={() => navigate('/binder')}>
+            <Button variant="ghost" onClick={() => confirmLeave() && navigate('/binder')}>
               Cancel
             </Button>
             <Button onClick={save}>Save to my binder</Button>
@@ -265,21 +326,9 @@ export function AddItem() {
   )
 }
 
-const input =
-  'w-full rounded-2xl border-2 border-line bg-white px-4 py-3 text-lg focus:border-clay outline-none'
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label className="block mb-5">
-      <span className="mb-1 block font-semibold">{label}</span>
-      {children}
-    </label>
-  )
-}
-
 function StepDots({ step }: { step: Step }) {
   const steps: Step[] = ['capture', 'identify', 'details']
-  const labels = { capture: 'Photo', identify: 'Identify', details: 'Details' }
+  const labels = { capture: 'Photo', identify: 'Our guess', details: 'Details' }
   const current = steps.indexOf(step)
   return (
     <div className="mt-5 flex items-center gap-2">
@@ -289,8 +338,8 @@ function StepDots({ step }: { step: Step }) {
         return (
           <div key={s} className="flex items-center gap-2">
             <span
-              className={`grid h-8 w-8 place-items-center rounded-full text-sm font-bold ${
-                active ? 'bg-clay text-white' : 'bg-cream-deep text-ink-soft'
+              className={`grid h-8 w-8 place-items-center rounded-full text-base font-bold ${
+                active ? 'bg-clay-dark text-white' : 'bg-cream-deep text-ink-soft'
               }`}
             >
               {done ? (
@@ -300,7 +349,7 @@ function StepDots({ step }: { step: Step }) {
               )}
             </span>
             <span className={active ? 'font-semibold' : 'text-ink-soft'}>{labels[s]}</span>
-            {i < steps.length - 1 && <span className="mx-1 text-line">—</span>}
+            {i < steps.length - 1 && <span className="mx-1 text-line" aria-hidden="true">—</span>}
           </div>
         )
       })}

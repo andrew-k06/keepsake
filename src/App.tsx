@@ -1,6 +1,8 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Link } from 'react-router-dom'
 import { Layout } from './components/Layout'
+import { Card } from './components/ui'
 import { Welcome } from './pages/Welcome'
+import { Start } from './pages/Start'
 import { Home } from './pages/Home'
 import { Room } from './pages/Room'
 import { ItemDetail } from './pages/ItemDetail'
@@ -10,11 +12,27 @@ import { Appraisals } from './pages/Appraisals'
 import { Emergency } from './pages/Emergency'
 import { Summary } from './pages/Summary'
 
+function NotFound() {
+  return (
+    <Card className="mx-auto mt-10 max-w-lg p-8 text-center">
+      <p className="text-xl font-semibold">That page doesn’t exist.</p>
+      <p className="mt-1 text-ink-soft">No harm done — your binder is safe.</p>
+      <Link
+        to="/binder"
+        className="mt-5 inline-flex min-h-11 items-center rounded-2xl bg-clay px-6 py-3 text-lg font-semibold text-white hover:bg-clay-dark"
+      >
+        Back to my binder
+      </Link>
+    </Card>
+  )
+}
+
 function App() {
   return (
     <Layout>
       <Routes>
         <Route path="/" element={<Welcome />} />
+        <Route path="/start" element={<Start />} />
         <Route path="/binder" element={<Home />} />
         <Route path="/room/:roomId" element={<Room />} />
         <Route path="/item/:itemId" element={<ItemDetail />} />
@@ -23,6 +41,7 @@ function App() {
         <Route path="/appraisals" element={<Appraisals />} />
         <Route path="/emergency" element={<Emergency />} />
         <Route path="/summary" element={<Summary />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </Layout>
   )

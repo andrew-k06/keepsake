@@ -3,6 +3,7 @@ import { useStore, money } from '../store'
 import { AppraisalBadge, Button, Card } from '../components/ui'
 import { ItemVisual } from '../components/ItemVisual'
 import { Camera, MapPin, CircleCheckBig, Shield, ArrowRight, type LucideIcon } from '../components/icons'
+import type { Item } from '../types'
 
 export function Appraisals() {
   const { state, updateItem } = useStore()
@@ -18,7 +19,7 @@ export function Appraisals() {
       <h1 className="text-4xl">Appraisals</h1>
       <p className="text-ink-soft mt-1 text-lg">
         Some things can be valued right from your photos. Others — like jewelry, watches, and coins —
-        are best seen in person by a certified appraiser near you.
+        are best seen in person by an accredited appraiser near you.
       </p>
 
       <Section
@@ -57,9 +58,9 @@ export function Appraisals() {
         <div>
           <p className="font-semibold text-lg">Why this matters</p>
           <p className="text-ink-soft">
-            A documented, appraised value protects your family. If something is ever lost, stolen, or
-            damaged, this record is what makes an insurance claim simple — and it makes sure your
-            children never sell something for a fraction of its worth.
+            A documented, appraised value gives your family solid ground. If something is ever lost,
+            stolen, or damaged, a written appraisal makes an insurance claim far easier — and it helps
+            your children avoid selling something precious for far less than it’s worth.
           </p>
         </div>
       </Card>
@@ -76,9 +77,9 @@ function Section({
 }: {
   title: string
   icon: LucideIcon
-  items: ReturnType<typeof useStore>['state']['items']
+  items: Item[]
   empty: string
-  action?: (it: ReturnType<typeof useStore>['state']['items'][number]) => React.ReactNode
+  action?: (it: Item) => React.ReactNode
 }) {
   return (
     <div className="mt-8">

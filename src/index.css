@@ -10,13 +10,15 @@
   --color-clay: #c2603d;
   --color-clay-dark: #a44c2d;
   --color-amber: #d99a3f;
+  /* readable amber for text on amber tints (was hardcoded #8a5e12) */
+  --color-amber-deep: #8a5e12;
   --color-sage: #4a7c6a;
   --color-sage-deep: #356152;
   --color-line: #e6dcc9;
   /* a slightly stronger line for emphasis borders */
   --color-line-strong: #d8cbb1;
 
-  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --font-serif: 'Georgia', 'Times New Roman', serif;
 
   /* Consistent radii */
@@ -28,9 +30,9 @@
   --shadow-soft: 0 1px 2px rgba(44, 38, 32, 0.04), 0 4px 14px rgba(44, 38, 32, 0.06);
   --shadow-lift: 0 2px 6px rgba(44, 38, 32, 0.06), 0 14px 30px rgba(44, 38, 32, 0.1);
 
-  /* Senior-first type scale */
-  --text-xs: 0.8125rem;
-  --text-sm: 0.9375rem;
+  /* Senior-first type scale — nothing meaning-bearing below 16px */
+  --text-xs: 0.875rem;
+  --text-sm: 1rem;
   --text-base: 1.125rem;
   --text-lg: 1.25rem;
   --text-xl: 1.4rem;
@@ -68,7 +70,12 @@ body {
 *:focus-visible {
   outline: 3px solid var(--color-sage);
   outline-offset: 2px;
-  border-radius: 8px;
+}
+
+/* Placeholders carry real guidance — keep them readable (aging eyes) */
+::placeholder {
+  color: var(--color-ink-soft);
+  opacity: 1;
 }
 
 h1,
@@ -95,6 +102,66 @@ h3 {
 img {
   max-width: 100%;
   display: block;
+}
+
+/* Respect users who turn animation off (vestibular / distraction) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+/* ---- Print: the printed binder is a deliverable, not an afterthought ----
+   Hide app chrome, drop decoration, force white, and show print-only blocks
+   (e.g. the wishes-not-a-will disclaimer footer). */
+@media print {
+  body {
+    background: #fff;
+    font-size: 12pt;
+  }
+  .print-hidden,
+  nav,
+  aside,
+  header,
+  button {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+  main {
+    max-width: none !important;
+    padding: 0 !important;
+  }
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+  .shadow-soft,
+  .shadow-lift {
+    box-shadow: none !important;
+  }
+  .rounded-3xl,
+  .rounded-2xl {
+    border-radius: 6px;
+  }
+  h2 {
+    break-after: avoid;
+  }
+  li,
+  tr,
+  .print-avoid-break {
+    break-inside: avoid;
+  }
+}
+
+/* Print-only blocks are invisible on screen */
+.print-only {
+  display: none;
 }
 
 /* The --shadow-soft / --shadow-lift theme tokens above generate the

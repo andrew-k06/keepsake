@@ -32,6 +32,11 @@ import {
   UserPlus,
   LayoutGrid,
   List,
+  Mic,
+  Square,
+  Undo2,
+  X,
+  Check,
   // status + meta
   Shield,
   ShieldCheck,
@@ -43,6 +48,9 @@ import {
   Star,
   Gift,
   Heart,
+  TrendingUp,
+  TrendingDown,
+  Minus,
   // category icons
   Gem,
   Image as ImageIcon,
@@ -89,6 +97,11 @@ export {
   UserPlus,
   LayoutGrid,
   List,
+  Mic,
+  Square,
+  Undo2,
+  X,
+  Check,
   // status + meta
   Shield,
   ShieldCheck,
@@ -100,6 +113,9 @@ export {
   Star,
   Gift,
   Heart,
+  TrendingUp,
+  TrendingDown,
+  Minus,
   // category icons (Image re-exported under its real name too)
   Gem,
   Frame,
@@ -114,6 +130,17 @@ export {
 }
 export { ImageIcon }
 export type { LucideIcon }
+
+/** Derive a calm lucide icon from a room's name (no emoji).
+    Single source of truth — previously duplicated in Home and Room. */
+export function roomIcon(name: string): LucideIcon {
+  const n = name.toLowerCase()
+  if (n.includes('safe') || n.includes('vault')) return Lock
+  if (n.includes('living') || n.includes('lounge') || n.includes('parlor')) return Armchair
+  if (n.includes('garage') || n.includes('shed') || n.includes('attic') || n.includes('basement'))
+    return Package
+  return DoorOpen
+}
 
 // ---- Category -> icon map ----
 // Keys are normalized (lowercased). Unknown categories fall back to Package.

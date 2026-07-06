@@ -11,11 +11,12 @@ export type AppraisalStatus =
 export interface Person {
   id: string
   name: string
-  relationship: string // "Daughter", "Son", "Spouse", "Executor"
+  relationship: string // "Daughter", "Son", "Spouse", "Friend"
+  /** Access role. 'executor' = trusted contact whose access activates only
+      through a verified process — never a live grant, never legal authority. */
   role: 'owner' | 'collaborator' | 'viewer' | 'executor'
   email?: string
   color: string // avatar accent
-  invited?: boolean // pending invite vs. active
 }
 
 export interface ItemDocument {
@@ -37,11 +38,14 @@ export interface Item {
   acquired?: string
   serial?: string
   condition?: string
-  beneficiaryId?: string // Person who inherits this item
+  beneficiaryId?: string // Person the owner WISHES to receive this (never a legal transfer)
   appraisalStatus: AppraisalStatus
   appraisedValue?: number
   documents: ItemDocument[]
+  /** Insurance is always owner-attested — the app never asserts coverage. */
   insured?: boolean
+  /** Soft delete: set when removed; restorable for 30 days. */
+  deletedAt?: string
 }
 
 export interface Room {
@@ -61,6 +65,23 @@ export interface BinderState {
   binderName: string
   rooms: Room[]
   items: Item[]
+  /** Soft-deleted items, restorable for 30 days. */
+  trash?: Item[]
   people: Person[]
   emergency: EmergencyEntry[]
 }
+
+/** Curated categories — free text broke appraisal triage (case-sensitive
+    string matching) and the icon map. "Other" is always available. */
+export const CATEGORIES = [
+  'Jewelry',
+  'Watches',
+  'Art',
+  'China & Silver',
+  'Furniture',
+  'Collectibles',
+  'Coins',
+  'Antiques',
+  'Instruments',
+  'Other',
+] as const

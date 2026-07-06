@@ -32,7 +32,7 @@ export function Button({
   size?: 'md' | 'lg'
 }) {
   const base =
-    'inline-flex items-center justify-center gap-2.5 rounded-2xl font-semibold transition active:scale-[0.98] disabled:opacity-40 disabled:active:scale-100'
+    'inline-flex items-center justify-center gap-2.5 rounded-2xl font-semibold transition active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed disabled:active:scale-100'
   const sizes = {
     md: 'px-6 py-4 text-lg',
     lg: 'px-7 py-5 text-xl',
@@ -100,8 +100,8 @@ const appraisalMeta: Record<
   { label: string; cls: string; icon: LucideIcon }
 > = {
   none: { label: 'Not appraised', cls: 'bg-cream-deep text-ink-soft', icon: CircleAlert },
-  requested: { label: 'Appraisal requested', cls: 'bg-amber/20 text-[#8a5e12]', icon: Search },
-  'photo-review': { label: 'In photo review', cls: 'bg-amber/20 text-[#8a5e12]', icon: Camera },
+  requested: { label: 'Appraisal requested', cls: 'bg-amber/20 text-amber-deep', icon: Search },
+  'photo-review': { label: 'In photo review', cls: 'bg-amber/20 text-amber-deep', icon: Camera },
   'needs-in-person': {
     label: 'Needs in-person visit',
     cls: 'bg-clay/15 text-clay-dark',
@@ -137,7 +137,7 @@ export function Pill({
     neutral: 'bg-cream-deep text-ink-soft',
     sage: 'bg-sage/15 text-sage-deep',
     clay: 'bg-clay/15 text-clay-dark',
-    amber: 'bg-amber/20 text-[#8a5e12]',
+    amber: 'bg-amber/20 text-amber-deep',
   }[tone]
   return (
     <span
@@ -181,12 +181,61 @@ export function Avatar({
   )
 }
 
-// Convenience: an "Insured" chip used in a couple of places.
+// Convenience: the insured chip. The app never *asserts* coverage — insurance
+// status is always something the owner told us, and the label says so.
 export function InsuredBadge() {
   return (
     <span className="inline-flex items-center gap-1.5 rounded-full bg-sage px-3 py-1 text-sm font-semibold text-white shadow-soft">
       <ShieldCheck className="h-4 w-4 shrink-0" strokeWidth={2.25} aria-hidden="true" />
-      Insured
+      Insured (noted by you)
+    </span>
+  )
+}
+
+// ---- Shared form primitives (previously copy-pasted across pages) ----
+export const inputClass =
+  'w-full rounded-2xl border-2 border-line bg-white px-4 py-3 text-lg focus:border-clay outline-none'
+
+export function Field({
+  label,
+  hint,
+  error,
+  children,
+}: {
+  label: string
+  hint?: string
+  error?: string
+  children: ReactNode
+}) {
+  return (
+    <label className="mb-5 block">
+      <span className="mb-1 block font-semibold">{label}</span>
+      {children}
+      {hint && !error && <span className="mt-1 block text-sm text-ink-soft">{hint}</span>}
+      {error && <InlineError>{error}</InlineError>}
+    </label>
+  )
+}
+
+/** A form problem the user can actually see — never a silent no-op. */
+export function InlineError({ children }: { children: ReactNode }) {
+  return (
+    <span
+      aria-live="polite"
+      className="mt-2 flex items-center gap-1.5 rounded-xl bg-clay/10 px-3 py-2 text-sm font-semibold text-clay-dark"
+    >
+      <CircleAlert className="h-4 w-4 shrink-0" strokeWidth={2.25} aria-hidden="true" />
+      {children}
+    </span>
+  )
+}
+
+/** Small tag for anything simulated in this preview build — the app never
+    pretends demo behavior is the real service. */
+export function DemoTag({ children = 'Preview' }: { children?: ReactNode }) {
+  return (
+    <span className="inline-flex items-center rounded-full border border-line-strong bg-cream-deep px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-ink-soft">
+      {children}
     </span>
   )
 }
