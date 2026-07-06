@@ -20,7 +20,7 @@ type Verdict = 'well-below' | 'below' | 'fair' | 'above'
  * the face-saving sentence to say at the door.
  */
 export function OfferCheck() {
-  const { state, logEvent } = useStore()
+  const { state, logEvent, completeStep } = useStore()
   const [itemId, setItemId] = useState('')
   const [customName, setCustomName] = useState('')
   const [customCategory, setCustomCategory] = useState('Other')
@@ -68,6 +68,7 @@ export function OfferCheck() {
   const runCheck = () => {
     if (!subject || offerNum == null) return
     setChecked(true)
+    completeStep('offer-check-try')
     logEvent(`You checked an offer of ${money(offerNum)} on “${subject.name}”`)
   }
 

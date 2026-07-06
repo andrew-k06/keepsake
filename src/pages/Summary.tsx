@@ -7,7 +7,7 @@ import { ItemVisual } from '../components/ItemVisual'
 import { Printer, Mail, Heart, ScrollText, FileText } from '../components/icons'
 
 export function Summary() {
-  const { state, logEvent } = useStore()
+  const { state, logEvent, completeStep } = useStore()
   const [showValues, setShowValues] = useState(false)
 
   const heirs = state.people.filter((p) => p.role !== 'owner')
@@ -60,6 +60,7 @@ export function Summary() {
           icon={Printer}
           onClick={() => {
             logEvent('You printed the family summary')
+            completeStep('share-summary')
             window.print()
           }}
         >
@@ -70,6 +71,7 @@ export function Summary() {
           icon={Mail}
           onClick={() => {
             logEvent('You shared the family summary by email')
+            completeStep('share-summary')
             shareByEmail()
           }}
         >

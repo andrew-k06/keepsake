@@ -117,6 +117,22 @@ export interface ExecutorAccess {
   waitDays: number
 }
 
+/** "Getting Ready" — the guided path. Most steps are DERIVED from the binder
+    itself (the guide observes, it never asks users to claim work the app can
+    verify); this slice records only the attested steps, skips, and session
+    metadata. */
+export interface PreparednessState {
+  startedAt?: string
+  lastVisitAt?: string
+  /** Last step the user acted on — used for the "last time you…" welcome. */
+  lastStepId?: string
+  /** Person helping during a sit-together session. */
+  togetherWithId?: string
+  steps: Record<string, { status: 'done' | 'skipped'; at: string; together?: boolean }>
+  /** Step ids whose one-time celebration has already shown. */
+  celebrated: string[]
+}
+
 export interface BinderState {
   ownerName: string
   binderName: string
@@ -129,6 +145,7 @@ export interface BinderState {
   emergency: EmergencyEntry[]
   audit: AuditEntry[]
   executorAccess?: ExecutorAccess
+  preparedness?: PreparednessState
 }
 
 export const STARTER_ITEM_LIMIT = 15

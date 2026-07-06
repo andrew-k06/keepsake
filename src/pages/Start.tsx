@@ -40,7 +40,9 @@ export function Start() {
       return
     }
     startFresh(name, mode === 'gift' && giverName.trim() ? { giftFrom: giverName } : undefined)
-    navigate(mode === 'gift' ? '/binder' : '/add')
+    // A gifted binder opens on the path: the child's onboarding IS chapter one,
+    // in together mode, with the script in hand.
+    navigate(mode === 'gift' ? '/guide' : '/add')
   }
 
   return (

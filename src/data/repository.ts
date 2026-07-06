@@ -41,6 +41,7 @@ export function migrate(raw: unknown): BinderState | null {
     emergency: (s.emergency as BinderState['emergency']) ?? [],
     audit: (s.audit as BinderState['audit']) ?? [],
     executorAccess: s.executorAccess as BinderState['executorAccess'],
+    preparedness: s.preparedness as BinderState['preparedness'],
   }
 }
 

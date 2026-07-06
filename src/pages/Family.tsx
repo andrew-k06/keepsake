@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useStore } from '../store'
 import { Avatar, Button, Card, Field, Pill, inputClass } from '../components/ui'
+import { GuideReturnPill } from '../components/GuideReturnPill'
 import { UserPlus, Lock, Trash2, LifeBuoy } from '../components/icons'
 import type { Person } from '../types'
 
@@ -73,6 +74,7 @@ export function Family() {
 
   return (
     <div>
+      <GuideReturnPill />
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-4xl">Family & loved ones</h1>

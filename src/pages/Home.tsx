@@ -2,15 +2,16 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useStore, money } from '../store'
 import { bestAmount } from '../lib/value'
+import { prepareProgress } from '../lib/prepare'
 import { Button, Card, AppraisalBadge } from '../components/ui'
 import { ItemCard } from '../components/ItemCard'
 import { ItemVisual } from '../components/ItemVisual'
+import { NextStepCard } from '../components/NextStepCard'
 import type { Item } from '../types'
 import {
   Plus,
   Quote,
   HeartHandshake,
-  ArrowRight,
   BookHeart,
   Users,
   ChevronRight,
@@ -144,22 +145,23 @@ export function Home() {
         </div>
       )}
 
-      {/* Gentle nudge */}
-      <Card className="mt-12 p-6 flex flex-col sm:flex-row items-center gap-5 bg-sage/5 border-sage/30">
-        <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-sage/15 text-sage-deep">
-          <HeartHandshake className="h-7 w-7" strokeWidth={1.75} aria-hidden="true" />
-        </span>
-        <div className="flex-1">
-          <p className="text-lg font-semibold">Your family will treasure this.</p>
-          <p className="text-ink-soft">
-            When you’re ready, you can share your binder so your children understand what each thing
-            means — and so they always know what to do.
-          </p>
-        </div>
-        <Button variant="secondary" icon={ArrowRight} onClick={() => navigate('/family')}>
-          Invite family
-        </Button>
-      </Card>
+      {/* Getting Ready — the one next step (replaces the old generic nudge:
+          the invite is now a real step with context and sequencing) */}
+      {(() => {
+        const progress = prepareProgress(state)
+        if (progress.coreDone || !progress.nextStep) return null
+        return (
+          <div className="mt-12">
+            <NextStepCard step={progress.nextStep} compact />
+            <Link
+              to="/guide"
+              className="mt-2 inline-flex min-h-11 items-center gap-1 py-1 text-sm font-semibold text-sage-deep underline hover:text-ink"
+            >
+              See the whole path
+            </Link>
+          </div>
+        )
+      })()}
 
       {/* Recently removed — mistakes aren't forever */}
       {trash.length > 0 && (

@@ -12,6 +12,7 @@ import type {
 } from './types'
 import { seedState } from './data/seed'
 import { createRepository } from './data/repository'
+import { STEPS, stepDone, emptyPreparedness } from './lib/prepare'
 
 const TRASH_DAYS = 30
 const AUDIT_LIMIT = 200
@@ -36,6 +37,13 @@ interface StoreApi {
   deleteEmergency: (id: string) => void
   setPlan: (plan: Plan) => void
   setExecutorAccess: (access: ExecutorAccess | undefined) => void
+  /** Getting Ready path. startPath is idempotent; attested steps only —
+      derived steps complete themselves by observing the binder. */
+  startPath: () => void
+  completeStep: (stepId: string) => void
+  skipStep: (stepId: string) => void
+  setTogether: (personId?: string) => void
+  markCelebrated: (stepId: string) => void
   /** Record an activity line (prints, exports, checks) in the binder's history. */
   logEvent: (action: string) => void
   resetDemo: () => void
@@ -300,6 +308,67 @@ export function StoreProvider({ children }: { children: ReactNode }) {
               ? `You designated ${who} as your trusted contact`
               : 'You removed your trusted-contact designation',
           )
+        }),
+      startPath: () =>
+        set((s) => {
+          if (s.preparedness?.startedAt) return { ...s, preparedness: { ...s.preparedness, lastVisitAt: new Date().toISOString() } }
+          const prep = emptyPreparedness()
+          // Credit life: steps the binder already satisfies don't fire a
+          // celebration barrage on the first visit.
+          prep.celebrated = STEPS.filter((st) => stepDone(s, st)).map((st) => st.id)
+          return withAudit({ ...s, preparedness: prep }, 'You opened your Getting Ready path')
+        }),
+      completeStep: (stepId) =>
+        set((s) => {
+          const step = STEPS.find((st) => st.id === stepId)
+          if (!step) return s
+          const prep = s.preparedness ?? emptyPreparedness()
+          if (prep.steps[stepId]?.status === 'done') return s
+          const together = prep.togetherWithId
+          const who = together ? s.people.find((p) => p.id === together)?.name : undefined
+          return withAudit(
+            {
+              ...s,
+              preparedness: {
+                ...prep,
+                lastStepId: stepId,
+                lastVisitAt: new Date().toISOString(),
+                steps: {
+                  ...prep.steps,
+                  [stepId]: { status: 'done', at: new Date().toISOString(), together: Boolean(together) },
+                },
+              },
+            },
+            who ? `You and ${who} finished “${step.title}”` : `You finished “${step.title}”`,
+          )
+        }),
+      skipStep: (stepId) =>
+        set((s) => {
+          const prep = s.preparedness ?? emptyPreparedness()
+          if (prep.steps[stepId]?.status === 'done') return s
+          // "Not today" is remembered, never audited — no shame trail.
+          return {
+            ...s,
+            preparedness: {
+              ...prep,
+              lastStepId: stepId,
+              lastVisitAt: new Date().toISOString(),
+              steps: { ...prep.steps, [stepId]: { status: 'skipped', at: new Date().toISOString() } },
+            },
+          }
+        }),
+      setTogether: (personId) =>
+        set((s) => {
+          const prep = s.preparedness ?? emptyPreparedness()
+          const who = personId ? s.people.find((p) => p.id === personId)?.name : undefined
+          const next = { ...s, preparedness: { ...prep, togetherWithId: personId } }
+          return who ? withAudit(next, `You started a visit together with ${who}`) : next
+        }),
+      markCelebrated: (stepId) =>
+        set((s) => {
+          const prep = s.preparedness ?? emptyPreparedness()
+          if (prep.celebrated.includes(stepId)) return s
+          return { ...s, preparedness: { ...prep, celebrated: [...prep.celebrated, stepId] } }
         }),
       logEvent: (action) => set((s) => withAudit(s, action)),
       resetDemo: () => setState(seedState),

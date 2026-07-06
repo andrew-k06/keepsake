@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useStore } from '../store'
 import { Button, Card, Field, inputClass } from '../components/ui'
+import { GuideReturnPill } from '../components/GuideReturnPill'
 import { LifeBuoy, ScrollText, Heart, Plus, Pencil, Trash2 } from '../components/icons'
 
 // Guided prompts — the questions families actually need answered. Tapping one
@@ -55,6 +56,7 @@ export function Emergency() {
 
   return (
     <div>
+      <GuideReturnPill />
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-3">

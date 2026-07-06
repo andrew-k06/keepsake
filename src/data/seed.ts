@@ -34,6 +34,26 @@ export const seedState: BinderState = {
     },
   ],
   executorAccess: { personId: 'p-sarah', protocol: 'verified-documents', waitDays: 14 },
+  // Margaret is partway along the Getting Ready path. Chapters 1–3 derive as
+  // done from the binder itself (stories, notes, people, wishes); the next
+  // step the demo shows is chapter 4 — print/share the summary. Derived-done
+  // steps are pre-celebrated so the first visit doesn't fire a barrage.
+  preparedness: {
+    startedAt: '2026-06-01T00:00:00.000Z',
+    lastVisitAt: '2026-06-28T00:00:00.000Z',
+    steps: {},
+    celebrated: [
+      'story-first',
+      'story-five',
+      'note-papers',
+      'note-first-call',
+      'note-medical',
+      'note-house',
+      'person-add',
+      'trusted-contact',
+      'wish-three',
+    ],
+  },
   audit: [
     { id: 'a-1', at: '2026-06-28T15:20:00.000Z', action: 'Sarah added a memory to “Grandfather Clock”' },
     { id: 'a-2', at: '2026-06-25T10:05:00.000Z', action: 'You decided “Grandmother’s Engagement Ring” should go to Sarah' },

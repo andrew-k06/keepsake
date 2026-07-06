@@ -37,6 +37,7 @@ import {
   Undo2,
   X,
   Check,
+  Compass,
   // status + meta
   Shield,
   ShieldCheck,
@@ -102,6 +103,7 @@ export {
   Undo2,
   X,
   Check,
+  Compass,
   // status + meta
   Shield,
   ShieldCheck,

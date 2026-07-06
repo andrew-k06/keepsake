@@ -15,6 +15,7 @@ import { compressImage } from '../lib/photo'
 import { makeValuation } from '../lib/value'
 import { exampleIdentification, type IdSuggestion } from '../lib/identify'
 import { VoiceCapture } from '../components/VoiceCapture'
+import { GuideReturnPill } from '../components/GuideReturnPill'
 import { CATEGORIES, STARTER_ITEM_LIMIT } from '../types'
 import type { AppraisalStatus, Item } from '../types'
 
@@ -166,6 +167,7 @@ export function AddItem() {
 
   return (
     <div className="mx-auto max-w-2xl">
+      <GuideReturnPill />
       <button
         onClick={() => confirmLeave() && navigate(-1)}
         className="inline-flex min-h-11 items-center gap-1 py-2 text-ink-soft hover:text-ink"

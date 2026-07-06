@@ -9,6 +9,7 @@ import {
   LifeBuoy,
   HeartHandshake,
   Shield,
+  Compass,
   type LucideIcon,
 } from './icons'
 
@@ -17,12 +18,16 @@ interface NavEntry {
   label: string
   short: string
   icon: LucideIcon
+  /** Mobile bottom nav is already at capacity — some entries are sidebar-only
+      (on mobile, the Home next-step card is the door to the Guide). */
+  desktopOnly?: boolean
 }
 
 // Note: Appraisals deliberately does NOT use a magnifying-glass icon — that
 // reads as "search" and earns mis-taps. Each short label is unique.
 const nav: NavEntry[] = [
   { to: '/binder', label: 'My Binder', short: 'Binder', icon: Home },
+  { to: '/guide', label: 'Getting Ready', short: 'Path', icon: Compass, desktopOnly: true },
   { to: '/family', label: 'Family', short: 'Family', icon: Users },
   { to: '/appraisals', label: 'Appraisals', short: 'Appraise', icon: BadgeCheck },
   { to: '/check', label: 'Before You Sell', short: 'Offers', icon: Shield },
@@ -83,7 +88,7 @@ export function Layout({ children }: { children: ReactNode }) {
 
         {/* Mobile bottom nav */}
         <nav className="md:hidden fixed bottom-0 inset-x-0 z-20 flex justify-around border-t border-line bg-white/95 backdrop-blur px-2 py-2">
-          {nav.map((n) => {
+          {nav.filter((n) => !n.desktopOnly).map((n) => {
             const Icon = n.icon
             return (
               <NavLink
