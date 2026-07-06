@@ -43,3 +43,16 @@ Flows worth driving every time:
   button renders and clicking shows the Listening state; actual transcription won't produce text.
 - The truth rule is a test surface: grep rendered pages for unlabeled simulation — anything
   simulated must show the "Preview"/"Example data" tag.
+
+## Getting Ready guide (`#/guide`)
+
+- Margaret demo: chapters 1–3 derive as done (9 of 11 steps); next step is "Print or share the
+  family summary". Stub `window.print` before clicking Print; returning to `#/guide` shows the
+  one-time celebration, then "Have the conversation" completes via its own "Yes — we've talked"
+  button → finish moment "Your family will never have to guess."
+- Fresh binder: no celebration barrage on first open; "Not today" must rotate the next offer to a
+  DIFFERENT chapter (skipping "first story" must never offer "five stories"); pages reached from
+  the guide show the "back to Getting Ready" pill (`location.state.fromGuide`).
+- Gift flow lands on `#/guide`; the Together select (`#together`) reveals the helper script panel
+  ("For {name}…") and the "Before your next visit" briefing.
+- Guide nav entry is desktop-sidebar only — mobile bottom nav stays at six items.
