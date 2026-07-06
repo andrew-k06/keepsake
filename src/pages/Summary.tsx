@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useStore, money } from '../store'
+import { bestAmount } from '../lib/value'
 import { Button, Card, Avatar } from '../components/ui'
 import { ItemVisual } from '../components/ItemVisual'
 import { Printer, Mail, Heart } from '../components/icons'
@@ -86,7 +87,7 @@ export function Summary() {
       {heirs.map((heir) => {
         const theirs = state.items.filter((it) => it.beneficiaryId === heir.id)
         if (theirs.length === 0) return null
-        const sum = theirs.reduce((s, it) => s + (it.appraisedValue ?? it.estValue ?? 0), 0)
+        const sum = theirs.reduce((s, it) => s + (bestAmount(it) ?? 0), 0)
         return (
           <div key={heir.id} className="mt-8">
             <div className="flex items-center gap-3">
@@ -113,10 +114,7 @@ export function Summary() {
                     <h3 className="text-lg font-semibold">
                       {it.name}
                       {showValues && (
-                        <span className="text-ink-soft font-normal">
-                          {' '}
-                          — {money(it.appraisedValue ?? it.estValue)}
-                        </span>
+                        <span className="text-ink-soft font-normal"> — {money(bestAmount(it))}</span>
                       )}
                     </h3>
                     {it.story ? (

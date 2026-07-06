@@ -11,6 +11,7 @@ import { Family } from './pages/Family'
 import { Appraisals } from './pages/Appraisals'
 import { Emergency } from './pages/Emergency'
 import { Summary } from './pages/Summary'
+import { Plan } from './pages/Plan'
 
 function NotFound() {
   return (
@@ -41,6 +42,7 @@ function App() {
         <Route path="/appraisals" element={<Appraisals />} />
         <Route path="/emergency" element={<Emergency />} />
         <Route path="/summary" element={<Summary />} />
+        <Route path="/plan" element={<Plan />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Layout>

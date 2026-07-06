@@ -5,6 +5,8 @@ import type { BinderState } from '../types'
 export const seedState: BinderState = {
   ownerName: 'Margaret',
   binderName: "Margaret's Binder",
+  // The demo shows what a purchased binder looks like — set up by Sarah as a gift.
+  plan: { tier: 'binder', activatedAt: '2026-05-14T00:00:00.000Z', giftFrom: 'Sarah' },
   rooms: [
     { id: 'living', name: 'Living Room' },
     { id: 'bedroom', name: 'Bedroom' },
@@ -29,6 +31,12 @@ export const seedState: BinderState = {
       email: 'david@example.com',
       color: '#d99a3f',
     },
+  ],
+  executorAccess: { personId: 'p-sarah', protocol: 'verified-documents', waitDays: 14 },
+  audit: [
+    { id: 'a-1', at: '2026-06-28T15:20:00.000Z', action: 'Sarah added a memory to “Grandfather Clock”' },
+    { id: 'a-2', at: '2026-06-25T10:05:00.000Z', action: 'You decided “Grandmother’s Engagement Ring” should go to Sarah' },
+    { id: 'a-3', at: '2026-05-14T09:00:00.000Z', action: 'Sarah set this binder up as a gift' },
   ],
   emergency: [
     {
@@ -63,13 +71,16 @@ export const seedState: BinderState = {
       image: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=800&q=70',
       story:
         'This was my mother Eleanor’s ring, given to her in 1948. The center diamond came from her own mother. I want Sarah to have it — she always loved the way it caught the light at Christmas.',
-      estValue: 8500,
+      valuations: [
+        { id: 'v-ring-1', source: 'owner', low: 8500, high: 8500, date: '2026-05-20T00:00:00.000Z' },
+      ],
       acquired: '1948 (inherited 1991)',
       condition: 'Excellent',
       beneficiaryId: 'p-sarah',
       appraisalStatus: 'needs-in-person',
       documents: [{ id: 'd-1', type: 'photo', label: 'Close-up of hallmark' }],
       insured: true,
+      createdAt: '2026-05-14T00:00:00.000Z',
     },
     {
       id: 'i-painting',
@@ -79,17 +90,27 @@ export const seedState: BinderState = {
       image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=70',
       story:
         'Bought at a gallery in Maine on our 25th anniversary trip. Robert haggled the artist down a little, and we laughed about it the whole drive home.',
-      estValue: 3200,
+      valuations: [
+        {
+          id: 'v-painting-2',
+          source: 'in-person-appraisal',
+          low: 3600,
+          high: 3600,
+          basis: 'Written appraisal, R. Whitfield, ISA (2023)',
+          date: '2026-05-22T00:00:00.000Z',
+        },
+        { id: 'v-painting-1', source: 'owner', low: 3200, high: 3200, date: '2026-05-15T00:00:00.000Z' },
+      ],
       acquired: '1998',
       condition: 'Good',
       beneficiaryId: 'p-david',
       appraisalStatus: 'appraised',
-      appraisedValue: 3600,
       documents: [
         { id: 'd-2', type: 'appraisal', label: 'Certified written appraisal (2023)' },
         { id: 'd-3', type: 'receipt', label: 'Original gallery receipt' },
       ],
       insured: true,
+      createdAt: '2026-05-15T00:00:00.000Z',
     },
     {
       id: 'i-watch',
@@ -99,13 +120,24 @@ export const seedState: BinderState = {
       image: 'https://images.unsplash.com/photo-1547996160-81dfa63595aa?auto=format&fit=crop&w=800&q=70',
       story:
         'My late husband wore this every day for thirty years, and it still keeps perfect time. David, this one is for you.',
-      estValue: 4200,
+      valuations: [
+        { id: 'v-watch-1', source: 'owner', low: 4200, high: 4200, date: '2026-05-16T00:00:00.000Z' },
+      ],
       acquired: '1985',
       condition: 'Very good — recently serviced',
       beneficiaryId: 'p-david',
       appraisalStatus: 'requested',
       documents: [],
       insured: false,
+      createdAt: '2026-05-16T00:00:00.000Z',
+      memories: [
+        {
+          id: 'm-watch-1',
+          personId: 'p-david',
+          text: 'Dad tapped this twice for luck before every road trip. I can still hear it.',
+          date: '2026-06-20T00:00:00.000Z',
+        },
+      ],
     },
     {
       id: 'i-china',
@@ -115,12 +147,15 @@ export const seedState: BinderState = {
       image: 'https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?auto=format&fit=crop&w=800&q=70',
       story:
         'Our wedding china. Every Thanksgiving for forty years was served on these plates. There are eleven dinner plates now — one broke in 1974 and we never replaced it, on purpose.',
-      estValue: 1800,
+      valuations: [
+        { id: 'v-china-1', source: 'owner', low: 1800, high: 1800, date: '2026-05-18T00:00:00.000Z' },
+      ],
       acquired: '1968',
       condition: 'Good',
       appraisalStatus: 'photo-review',
       documents: [],
       insured: false,
+      createdAt: '2026-05-18T00:00:00.000Z',
     },
     {
       id: 'i-clock',
@@ -130,28 +165,43 @@ export const seedState: BinderState = {
       image: 'https://images.unsplash.com/photo-1563861826100-9cb868fdbe1c?auto=format&fit=crop&w=800&q=70',
       story:
         'Built by Robert’s grandfather, a clockmaker in Vermont. Wind it once a week with the brass key kept in the bottom drawer. It chimes a little early — that’s its character.',
-      estValue: 5500,
+      valuations: [
+        { id: 'v-clock-1', source: 'owner', low: 5500, high: 5500, date: '2026-05-19T00:00:00.000Z' },
+      ],
       acquired: '1952 (family piece)',
       condition: 'Excellent — fully working',
       beneficiaryId: 'p-sarah',
       appraisalStatus: 'none',
       documents: [{ id: 'd-4', type: 'manual', label: 'Winding instructions (handwritten)' }],
       insured: true,
+      createdAt: '2026-05-19T00:00:00.000Z',
+      memories: [
+        {
+          id: 'm-clock-1',
+          personId: 'p-sarah',
+          text: 'Falling asleep to those early chimes is my whole childhood.',
+          date: '2026-06-28T00:00:00.000Z',
+        },
+      ],
     },
     {
       id: 'i-coins',
       name: 'Silver Dollar Collection',
-      category: 'Collectibles',
+      category: 'Coins',
       roomId: 'safe',
       image: 'https://images.unsplash.com/photo-1574607383476-f517f260d30b?auto=format&fit=crop&w=800&q=70',
       story:
         'Robert started this collection with his father. Forty-two Morgan and Peace dollars sit in the blue folder. He always said the 1921 was the special one.',
-      estValue: 2400,
+      valuations: [
+        { id: 'v-coins-1', source: 'owner', low: 2400, high: 2400, date: '2026-05-20T00:00:00.000Z' },
+      ],
       acquired: '1960s–2010',
       condition: 'Mixed',
       appraisalStatus: 'needs-in-person',
       documents: [],
       insured: false,
+      createdAt: '2026-05-20T00:00:00.000Z',
     },
   ],
+  trash: [],
 }

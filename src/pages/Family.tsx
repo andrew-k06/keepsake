@@ -187,10 +187,31 @@ export function Family() {
         <p className="text-ink-soft">
           <span className="font-semibold text-ink">Your privacy comes first.</span> Right now your
           binder lives only on this device — no one can see it unless you show them or print it. You
-          can change what anyone here can do, or remove them, at any time. When online sharing
-          arrives, each person will see only what you allow.
+          can change what anyone here can do, or remove them, at any time. Every important change is
+          written down below, so nothing happens quietly. When online sharing arrives, each person
+          will see only what you allow.
         </p>
       </Card>
+
+      {/* Activity — the binder's plain-language record of important changes */}
+      {state.audit.length > 0 && (
+        <div className="mt-8">
+          <h2 className="text-2xl">What has changed</h2>
+          <p className="text-ink-soft">
+            A record of the important changes in this binder — wishes, people, and access.
+          </p>
+          <Card className="mt-3 divide-y divide-line p-0">
+            {state.audit.slice(0, 8).map((a) => (
+              <div key={a.id} className="flex items-baseline justify-between gap-4 px-5 py-3">
+                <span>{a.action}</span>
+                <span className="shrink-0 text-sm text-ink-soft">
+                  {new Date(a.at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                </span>
+              </div>
+            ))}
+          </Card>
+        </div>
+      )}
     </div>
   )
 }

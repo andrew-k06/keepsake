@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import type { Item } from '../types'
 import { useStore, money } from '../store'
+import { bestAmount } from '../lib/value'
 import { AppraisalBadge, InsuredBadge } from './ui'
 import { ItemVisual } from './ItemVisual'
 
@@ -24,7 +25,7 @@ export function ItemCard({ item }: { item: Item }) {
         <h3 className="text-xl leading-tight">{item.name}</h3>
         <p className="mt-1 text-ink-soft">{item.category}</p>
         <div className="mt-3 flex items-center justify-between gap-3">
-          <span className="text-lg font-semibold text-ink">{money(item.estValue)}</span>
+          <span className="text-lg font-semibold text-ink">{money(bestAmount(item))}</span>
           <AppraisalBadge status={item.appraisalStatus} />
         </div>
         {heir && (

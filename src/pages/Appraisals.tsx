@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useStore, money } from '../store'
+import { bestAmount, isAppraised, makeValuation } from '../lib/value'
 import { AppraisalBadge, Button, Card } from '../components/ui'
 import { ItemVisual } from '../components/ItemVisual'
 import { Camera, MapPin, CircleCheckBig, Shield, ArrowRight, type LucideIcon } from '../components/icons'
@@ -30,7 +31,18 @@ export function Appraisals() {
         action={(it) => (
           <Button
             variant="secondary"
-            onClick={() => updateItem(it.id, { appraisalStatus: 'appraised', appraisedValue: Math.round((it.estValue ?? 1000) * 1.1) })}
+            onClick={() => {
+              const base = bestAmount(it) ?? 1000
+              updateItem(it.id, {
+                appraisalStatus: 'appraised',
+                valuations: [
+                  makeValuation('photo-appraisal', Math.round(base * 1.05), Math.round(base * 1.15), {
+                    basis: 'Example photo appraisal (preview)',
+                  }),
+                  ...it.valuations,
+                ],
+              })
+            }}
           >
             Complete (demo)
           </Button>
@@ -101,10 +113,10 @@ function Section({
                   {it.name}
                 </Link>
                 <div className="text-ink-soft">
-                  {it.category} · est. {money(it.estValue)}
-                  {it.appraisedValue && (
+                  {it.category} · {money(bestAmount(it))}
+                  {isAppraised(it) && (
                     <span className="text-sage-deep inline-flex items-center gap-1">
-                      <ArrowRight className="h-4 w-4" aria-hidden /> appraised {money(it.appraisedValue)}
+                      <ArrowRight className="h-4 w-4" aria-hidden /> appraised
                     </span>
                   )}
                 </div>

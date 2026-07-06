@@ -12,7 +12,8 @@ import {
   CircleCheckBig,
 } from '../components/icons'
 import { compressImage } from '../lib/photo'
-import { CATEGORIES } from '../types'
+import { makeValuation } from '../lib/value'
+import { CATEGORIES, STARTER_ITEM_LIMIT } from '../types'
 import type { AppraisalStatus, Item } from '../types'
 
 // Demo suggestion pool. In the full app a vision model studies the photo;
@@ -104,7 +105,7 @@ export function AddItem() {
     roomId,
     photo,
     story: '',
-    estValue: null,
+    valuations: [],
     appraisalStatus: 'none',
     documents: [],
   } as Item
@@ -121,13 +122,39 @@ export function AddItem() {
       roomId,
       photo,
       story,
-      estValue: estValue ? Number(estValue) : null,
+      valuations: estValue ? [makeValuation('owner', Number(estValue))] : [],
       beneficiaryId: beneficiaryId || undefined,
       appraisalStatus,
       documents: [],
       insured: false,
     })
     navigate(`/item/${id}`)
+  }
+
+  // Starter binders hold 15 items; the one-time Keepsake Binder removes the cap.
+  const atStarterLimit = state.plan.tier === 'starter' && state.items.length >= STARTER_ITEM_LIMIT
+  if (atStarterLimit) {
+    return (
+      <div className="mx-auto max-w-2xl">
+        <h1 className="mt-3 text-4xl">Your starter binder is full.</h1>
+        <Card className="mt-6 p-8">
+          <p className="text-xl">
+            You’ve kept {STARTER_ITEM_LIMIT} treasures — wonderful. The free starter binder holds{' '}
+            {STARTER_ITEM_LIMIT} items.
+          </p>
+          <p className="mt-3 text-ink-soft">
+            The Keepsake Binder is a single purchase you own forever — no monthly fees, unlimited
+            items, and the printable family summary. Nothing you’ve added is ever held back from you.
+          </p>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Button onClick={() => navigate('/plan')}>See the Keepsake Binder</Button>
+            <Button variant="ghost" onClick={() => navigate('/binder')}>
+              Back to my binder
+            </Button>
+          </div>
+        </Card>
+      </div>
+    )
   }
 
   return (

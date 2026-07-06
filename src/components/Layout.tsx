@@ -59,7 +59,14 @@ export function Layout({ children }: { children: ReactNode }) {
         </nav>
         <div className="mt-auto pt-6 border-t border-line text-sm text-ink-soft">
           <p className="font-semibold text-ink">{state.binderName}</p>
-          <p>Signed in as {state.ownerName}</p>
+          <p>{state.ownerName}’s binder, on this device</p>
+          <NavLink to="/plan" className="mt-1 inline-block font-semibold text-clay-dark hover:underline">
+            {state.plan.tier === 'starter'
+              ? 'Free starter binder'
+              : state.plan.tier === 'binder'
+                ? 'Keepsake Binder — yours forever'
+                : 'Family Plan'}
+          </NavLink>
         </div>
       </aside>
 

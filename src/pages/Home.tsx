@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useStore, money } from '../store'
+import { bestAmount } from '../lib/value'
 import { Button, Card, AppraisalBadge } from '../components/ui'
 import { ItemCard } from '../components/ItemCard'
 import { ItemVisual } from '../components/ItemVisual'
@@ -50,6 +51,22 @@ export function Home() {
           Add an item
         </Button>
       </div>
+
+      {/* A gifted binder opens with the giver's warmth, not a feature tour */}
+      {state.plan.giftFrom && state.items.length === 0 && (
+        <Card className="mt-6 flex items-start gap-4 border-sage/30 bg-sage/5 p-6">
+          <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-sage/15 text-sage-deep">
+            <HeartHandshake className="h-6 w-6" strokeWidth={2} aria-hidden="true" />
+          </span>
+          <div>
+            <p className="text-lg font-semibold">A gift from {state.plan.giftFrom}.</p>
+            <p className="text-ink-soft">
+              {state.plan.giftFrom} set this binder up because your stories matter to them. There is
+              nothing to pay — whenever you’re ready, add the first thing that comes to mind.
+            </p>
+          </div>
+        </Card>
+      )}
 
       {/* Stats — stories and wishes lead; money never headlines the binder */}
       <div className="mt-8 grid gap-4 sm:grid-cols-3">
@@ -241,7 +258,7 @@ function ItemRow({ item }: { item: Item }) {
         <AppraisalBadge status={item.appraisalStatus} />
       </div>
       <div className="shrink-0 text-right">
-        <div className="text-lg font-semibold">{money(item.appraisedValue ?? item.estValue)}</div>
+        <div className="text-lg font-semibold">{money(bestAmount(item))}</div>
       </div>
       <ChevronRight
         className="h-5 w-5 shrink-0 text-ink-soft transition group-hover:text-clay-dark"

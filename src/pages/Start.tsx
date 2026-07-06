@@ -11,7 +11,9 @@ import { BookHeart, ChevronLeft } from '../components/icons'
 export function Start() {
   const navigate = useNavigate()
   const { state, startFresh } = useStore()
+  const [mode, setMode] = useState<'me' | 'gift'>('me')
   const [name, setName] = useState('')
+  const [giverName, setGiverName] = useState('')
   const [error, setError] = useState('')
 
   // If the current binder already has the user's own items, replacing it must
@@ -21,7 +23,11 @@ export function Start() {
 
   const begin = () => {
     if (!name.trim()) {
-      setError('Please tell us your first name so the binder is yours.')
+      setError(
+        mode === 'me'
+          ? 'Please tell us your first name so the binder is yours.'
+          : 'Please tell us their name so the binder is theirs.',
+      )
       return
     }
     if (
@@ -33,8 +39,8 @@ export function Start() {
     ) {
       return
     }
-    startFresh(name)
-    navigate('/add')
+    startFresh(name, mode === 'gift' && giverName.trim() ? { giftFrom: giverName } : undefined)
+    navigate(mode === 'gift' ? '/binder' : '/add')
   }
 
   return (
@@ -53,12 +59,37 @@ export function Start() {
         </span>
         <h1 className="mt-6 text-4xl">Let’s make it yours.</h1>
         <p className="mt-3 text-lg text-ink-soft">
-          One question, then we’ll add your first item together. There’s no account and no bill —
-          your binder lives on this device.
+          A question or two, then the binder is ready. There’s no account and no bill — it lives on
+          this device.
         </p>
 
-        <Card className="mt-8 p-7">
-          <Field label="What’s your name?">
+        {/* Who is this binder for? The adult child setting one up for a parent
+            is the most common beginning — give that path a front door. */}
+        <div className="mt-6 flex gap-2" role="radiogroup" aria-label="Who is this binder for?">
+          {(
+            [
+              { key: 'me', label: 'It’s for me' },
+              { key: 'gift', label: 'I’m setting it up for someone I love' },
+            ] as const
+          ).map((opt) => (
+            <button
+              key={opt.key}
+              role="radio"
+              aria-checked={mode === opt.key}
+              onClick={() => setMode(opt.key)}
+              className={`min-h-11 rounded-2xl border-2 px-4 py-2.5 font-semibold transition ${
+                mode === opt.key
+                  ? 'border-clay-dark bg-clay-dark text-white'
+                  : 'border-line bg-white text-ink-soft hover:border-clay'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+
+        <Card className="mt-5 p-7">
+          <Field label={mode === 'me' ? 'What’s your name?' : 'Whose binder will this be?'}>
             <input
               className={inputClass}
               value={name}
@@ -71,10 +102,23 @@ export function Start() {
               placeholder="Margaret"
             />
           </Field>
+          {mode === 'gift' && (
+            <Field
+              label="And your name?"
+              hint="You’ll be added as a helper, so you can sit together and add items — the binder belongs to them."
+            >
+              <input
+                className={inputClass}
+                value={giverName}
+                onChange={(e) => setGiverName(e.target.value)}
+                placeholder="Sarah"
+              />
+            </Field>
+          )}
           {error && <InlineError>{error}</InlineError>}
           <div className="mt-5">
             <Button full size="lg" onClick={begin}>
-              Create my binder
+              {mode === 'me' ? 'Create my binder' : 'Create their binder'}
             </Button>
           </div>
         </Card>

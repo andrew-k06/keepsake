@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useStore, money } from '../store'
+import { bestAmount, valueSourceLabel } from '../lib/value'
 import {
   AppraisalBadge,
   Button,
@@ -108,10 +109,8 @@ export function ItemDetail() {
           <h1 className="mt-4 text-4xl">{item.name}</h1>
 
           <div className="mt-4 flex items-baseline gap-3">
-            <span className="text-3xl font-semibold">{money(item.appraisedValue ?? item.estValue)}</span>
-            <span className="text-ink-soft">
-              {item.appraisedValue ? 'appraised value' : 'your estimate'}
-            </span>
+            <span className="text-3xl font-semibold">{money(bestAmount(item))}</span>
+            <span className="text-ink-soft">{valueSourceLabel(item)}</span>
           </div>
 
           {/* The story — the heart of Keepsake */}
