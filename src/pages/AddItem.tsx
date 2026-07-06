@@ -13,21 +13,10 @@ import {
 } from '../components/icons'
 import { compressImage } from '../lib/photo'
 import { makeValuation } from '../lib/value'
+import { exampleIdentification, type IdSuggestion } from '../lib/identify'
+import { VoiceCapture } from '../components/VoiceCapture'
 import { CATEGORIES, STARTER_ITEM_LIMIT } from '../types'
 import type { AppraisalStatus, Item } from '../types'
-
-// Demo suggestion pool. In the full app a vision model studies the photo;
-// this preview shows an EXAMPLE of what that step looks like — and says so.
-const SUGGESTIONS = [
-  { name: 'Diamond Ring', category: 'Jewelry', value: 4500 },
-  { name: 'Framed Painting', category: 'Art', value: 1200 },
-  { name: 'Vintage Wristwatch', category: 'Watches', value: 2200 },
-  { name: 'Antique Vase', category: 'Antiques', value: 900 },
-  { name: 'Pearl Necklace', category: 'Jewelry', value: 1600 },
-  { name: 'Heirloom Chair', category: 'Furniture', value: 700 },
-  { name: 'Violin', category: 'Instruments', value: 3000 },
-  { name: 'Collectible Camera', category: 'Collectibles', value: 500 },
-]
 
 type Step = 'capture' | 'identify' | 'details'
 
@@ -42,7 +31,7 @@ export function AddItem() {
   const [photo, setPhoto] = useState<string | undefined>()
   const [photoError, setPhotoError] = useState('')
   const [identifying, setIdentifying] = useState(false)
-  const [suggested, setSuggested] = useState(false) // AI prefilled fields, not yet user-confirmed
+  const [suggestion, setSuggestion] = useState<IdSuggestion | null>(null)
 
   const [name, setName] = useState('')
   const [nameError, setNameError] = useState('')
@@ -73,26 +62,31 @@ export function AddItem() {
   const runIdentify = () => {
     setStep('identify')
     setIdentifying(true)
-    const pick = SUGGESTIONS[Math.floor((Date.now() / 100) % SUGGESTIONS.length)]
+    const pick = exampleIdentification(Date.now() / 100)
     window.setTimeout(() => {
-      setName(pick.name)
-      setCategory(pick.category)
-      setEstValue(String(pick.value))
-      setSuggested(true)
+      setSuggestion(pick)
       setIdentifying(false)
     }, 1600)
+  }
+
+  const acceptSuggestion = () => {
+    if (suggestion) {
+      setName(suggestion.name)
+      setCategory(suggestion.category)
+    }
+    setStep('details')
   }
 
   // Skipping the photo goes straight to a blank form. The app never says
   // "looking at your photo" when there is no photo.
   const skipPhoto = () => setStep('details')
 
-  // The user rejects the suggestion: clear everything prefilled and let them say what it is.
+  // The user rejects the suggestion: nothing is kept — they say what it is.
   const rejectSuggestion = () => {
+    setSuggestion(null)
     setName('')
     setCategory('')
     setEstValue('')
-    setSuggested(false)
     setStep('details')
   }
 
@@ -116,13 +110,26 @@ export function AddItem() {
       return
     }
     const appraisalStatus: AppraisalStatus = 'none'
+    // The owner's own figure and the AI's example range are separate entries —
+    // provenance is never blurred.
+    const valuations = [
+      ...(estValue ? [makeValuation('owner', Number(estValue))] : []),
+      ...(suggestion && category === suggestion.category
+        ? [
+            makeValuation('ai', suggestion.low, suggestion.high, {
+              confidence: suggestion.confidence === 'guessing' ? 'guessing' : 'fairly sure',
+              basis: 'Example range from the preview identification',
+            }),
+          ]
+        : []),
+    ]
     const id = addItem({
       name: name.trim(),
       category: category || 'Other',
       roomId,
       photo,
       story,
-      valuations: estValue ? [makeValuation('owner', Number(estValue))] : [],
+      valuations,
       beneficiaryId: beneficiaryId || undefined,
       appraisalStatus,
       documents: [],
@@ -219,7 +226,7 @@ export function AddItem() {
               <ItemVisual item={previewItem} rounded="rounded-none" />
             </div>
             <div aria-live="polite">
-              {identifying ? (
+              {identifying || !suggestion ? (
                 <>
                   <p className="flex items-center gap-2 text-xl font-semibold">
                     <Sparkles className="h-5 w-5 text-clay" strokeWidth={2} aria-hidden="true" />
@@ -234,29 +241,33 @@ export function AddItem() {
                 <>
                   <p className="flex items-center gap-2 text-xl font-semibold">
                     <Sparkles className="h-5 w-5 text-clay" strokeWidth={2} aria-hidden="true" />
-                    Here’s a starting point
+                    {suggestion.confidence === 'fairly sure' ? 'I’m fairly sure about this one' : 'I’m guessing here'}
                   </p>
-                  <p className="text-ink-soft">
-                    Our guess: a <span className="font-semibold text-ink">{name}</span>. You know your
-                    things better than we do — if that’s wrong, just say so.
+                  <p className="mt-1 text-lg">
+                    This looks like a <span className="font-semibold">{suggestion.name}</span> — I can
+                    see {suggestion.evidence}.
                   </p>
-                  <p className="mt-2">
-                    <DemoTag>Preview — example suggestion</DemoTag>
+                  <p className="mt-2 text-ink-soft">
+                    Pieces like this often sell for{' '}
+                    <span className="font-semibold text-ink">
+                      ${suggestion.low.toLocaleString()}–${suggestion.high.toLocaleString()}
+                    </span>
+                    . To be sure, a photo of {suggestion.followUp} would settle it.
                   </p>
-                  <p className="mt-1 text-sm text-ink-soft">
-                    In the full app, an AI assistant studies your photo and explains what it sees.
+                  <p className="mt-3">
+                    <DemoTag>Preview — an example of how the full app explains what it sees</DemoTag>
                   </p>
                 </>
               )}
             </div>
           </div>
 
-          {!identifying && (
+          {!identifying && suggestion && (
             <div className="mt-6 flex flex-wrap justify-end gap-3">
               <Button variant="secondary" onClick={rejectSuggestion}>
                 No — I’ll tell you what it is
               </Button>
-              <Button icon={ArrowRight} onClick={() => setStep('details')}>
+              <Button icon={ArrowRight} onClick={acceptSuggestion}>
                 That’s right — continue
               </Button>
             </div>
@@ -266,10 +277,10 @@ export function AddItem() {
 
       {step === 'details' && (
         <Card className="mt-6 p-7">
-          {suggested && (
+          {suggestion && name === suggestion.name && (
             <p className="mb-5 rounded-2xl bg-amber/15 px-4 py-3 text-sm text-ink-soft">
-              We suggested the name, category, and value below — please check them and change anything
-              that isn’t right.
+              We suggested the name and category below — please check them and change anything that
+              isn’t right.
             </p>
           )}
           <Field label="What is it?" error={nameError}>
@@ -316,8 +327,11 @@ export function AddItem() {
           </Field>
 
           <Field label="Tell its story">
+            <VoiceCapture
+              onText={(text) => setStory((s) => (s ? `${s.trim()} ${text}` : text))}
+            />
             <textarea
-              className={`${inputClass} min-h-28`}
+              className={`${inputClass} mt-3 min-h-28`}
               value={story}
               onChange={(e) => setStory(e.target.value)}
               placeholder="Where did it come from? Why does it matter? Who should know about it?"

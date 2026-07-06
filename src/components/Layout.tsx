@@ -8,6 +8,7 @@ import {
   BadgeCheck,
   LifeBuoy,
   HeartHandshake,
+  Shield,
   type LucideIcon,
 } from './icons'
 
@@ -24,6 +25,7 @@ const nav: NavEntry[] = [
   { to: '/binder', label: 'My Binder', short: 'Binder', icon: Home },
   { to: '/family', label: 'Family', short: 'Family', icon: Users },
   { to: '/appraisals', label: 'Appraisals', short: 'Appraise', icon: BadgeCheck },
+  { to: '/check', label: 'Before You Sell', short: 'Offers', icon: Shield },
   { to: '/emergency', label: 'In an Emergency', short: 'Emergency', icon: LifeBuoy },
   { to: '/summary', label: 'For My Family', short: 'Summary', icon: HeartHandshake },
 ]

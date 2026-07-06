@@ -2,6 +2,9 @@ import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useStore, money } from '../store'
 import { bestAmount, valueSourceLabel } from '../lib/value'
+import { routeAppraisal, tierTitle } from '../lib/appraise'
+import { TrendCard } from '../components/TrendCard'
+import { VoiceCapture } from '../components/VoiceCapture'
 import {
   AppraisalBadge,
   Button,
@@ -38,6 +41,7 @@ export function ItemDetail() {
   const [editingStory, setEditingStory] = useState(false)
   const [storyDraft, setStoryDraft] = useState('')
   const [showInsuranceInfo, setShowInsuranceInfo] = useState(false)
+  const [showAppraisalPlan, setShowAppraisalPlan] = useState(false)
 
   if (!item) {
     return (
@@ -56,12 +60,11 @@ export function ItemDetail() {
   const assignHeir = (personId: string) =>
     updateItem(item.id, { beneficiaryId: personId || undefined })
 
-  const requestAppraisal = () => {
-    // Mimics triage: certain categories must be seen in person.
-    const inPerson = ['Jewelry', 'Watches', 'Collectibles', 'Coins']
-    updateItem(item.id, {
-      appraisalStatus: inPerson.includes(item.category) ? 'needs-in-person' : 'photo-review',
-    })
+  // Explainable routing (lib/appraise.ts): the user sees WHY and WHAT IT COSTS
+  // before anything is requested — never a teleport.
+  const route = routeAppraisal(item)
+  const confirmAppraisal = (tier: 'photo-review' | 'needs-in-person') => {
+    updateItem(item.id, { appraisalStatus: tier })
     navigate('/appraisals')
   }
 
@@ -137,8 +140,11 @@ export function ItemDetail() {
             </div>
             {editingStory ? (
               <div className="relative mt-3">
+                <VoiceCapture
+                  onText={(text) => setStoryDraft((s) => (s ? `${s.trim()} ${text}` : text))}
+                />
                 <textarea
-                  className={`${inputClass} min-h-32`}
+                  className={`${inputClass} mt-3 min-h-32`}
                   value={storyDraft}
                   onChange={(e) => setStoryDraft(e.target.value)}
                   placeholder="Where did it come from? Why does it matter?"
@@ -172,6 +178,9 @@ export function ItemDetail() {
             <Fact icon={DoorOpen} label="Room" value={room ? room.name : '—'} />
             <Fact icon={KeyRound} label="Serial / mark" value={item.serial ?? '—'} />
           </dl>
+
+          {/* Market trend — kind, sourced, never a stock ticker */}
+          <TrendCard item={item} familyPlan={state.plan.tier === 'family'} />
 
           {/* Who it goes to */}
           <div className="mt-6">
@@ -269,13 +278,54 @@ export function ItemDetail() {
             )}
           </div>
 
+          {/* Appraisal — recommendation first, with the why and the cost */}
+          {item.appraisalStatus === 'none' && (
+            <div className="mt-8">
+              {!showAppraisalPlan ? (
+                <Button icon={Search} onClick={() => setShowAppraisalPlan(true)}>
+                  Get it appraised
+                </Button>
+              ) : (
+                <Card className="bg-cream p-6">
+                  <p className="text-xl font-semibold">{tierTitle[route.tier]}</p>
+                  <p className="mt-2 text-ink-soft">{route.why}</p>
+                  <p className="mt-2 text-ink-soft">{route.costBenefit}</p>
+                  {route.tier !== 'none-needed' && (
+                    <p className="mt-2 text-sm text-ink-soft">
+                      Only the appraiser you choose would see this item’s photos — never your whole
+                      binder, and never your address before you book.
+                    </p>
+                  )}
+                  <div className="mt-5 flex flex-wrap gap-3">
+                    {route.tier === 'none-needed' ? (
+                      <>
+                        <Button onClick={() => setShowAppraisalPlan(false)}>Good to know</Button>
+                        <Button variant="ghost" onClick={() => confirmAppraisal('photo-review')}>
+                          Request a photo review anyway
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <Button
+                          onClick={() =>
+                            confirmAppraisal(route.tier === 'in-person' ? 'needs-in-person' : 'photo-review')
+                          }
+                        >
+                          {route.tier === 'in-person' ? 'Plan an in-person visit' : 'Start the photo review'}
+                        </Button>
+                        <Button variant="ghost" onClick={() => setShowAppraisalPlan(false)}>
+                          Not now
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </Card>
+              )}
+            </div>
+          )}
+
           {/* Actions */}
-          <div className="mt-8 flex flex-wrap items-center gap-3">
-            {item.appraisalStatus === 'none' && (
-              <Button icon={Search} onClick={requestAppraisal}>
-                Get it appraised
-              </Button>
-            )}
+          <div className="mt-6 flex flex-wrap items-center gap-3">
             <Button
               variant="ghost"
               icon={Trash2}

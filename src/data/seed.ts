@@ -5,8 +5,9 @@ import type { BinderState } from '../types'
 export const seedState: BinderState = {
   ownerName: 'Margaret',
   binderName: "Margaret's Binder",
-  // The demo shows what a purchased binder looks like — set up by Sarah as a gift.
-  plan: { tier: 'binder', activatedAt: '2026-05-14T00:00:00.000Z', giftFrom: 'Sarah' },
+  // The demo shows the full product — Sarah set it up as a gift and pays for
+  // the Family Plan (market watching), so every feature is visible.
+  plan: { tier: 'family', activatedAt: '2026-05-14T00:00:00.000Z', giftFrom: 'Sarah' },
   rooms: [
     { id: 'living', name: 'Living Room' },
     { id: 'bedroom', name: 'Bedroom' },
