@@ -1,12 +1,13 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useStore, money } from '../store'
 import { bestAmount } from '../lib/value'
 import { Button, Card, Avatar } from '../components/ui'
 import { ItemVisual } from '../components/ItemVisual'
-import { Printer, Mail, Heart } from '../components/icons'
+import { Printer, Mail, Heart, ScrollText, FileText } from '../components/icons'
 
 export function Summary() {
-  const { state } = useStore()
+  const { state, logEvent } = useStore()
   const [showValues, setShowValues] = useState(false)
 
   const heirs = state.people.filter((p) => p.role !== 'owner')
@@ -55,10 +56,23 @@ export function Summary() {
       </p>
 
       <div className="print-hidden mt-5 flex flex-wrap items-center gap-3">
-        <Button icon={Printer} onClick={() => window.print()}>
+        <Button
+          icon={Printer}
+          onClick={() => {
+            logEvent('You printed the family summary')
+            window.print()
+          }}
+        >
           Print this binder
         </Button>
-        <Button variant="secondary" icon={Mail} onClick={shareByEmail}>
+        <Button
+          variant="secondary"
+          icon={Mail}
+          onClick={() => {
+            logEvent('You shared the family summary by email')
+            shareByEmail()
+          }}
+        >
           Share by email
         </Button>
         <label className="ml-1 inline-flex min-h-11 cursor-pointer items-center gap-2 font-semibold text-ink-soft">
@@ -70,6 +84,24 @@ export function Summary() {
           />
           Show dollar values
         </label>
+      </div>
+
+      {/* Documents for the professionals in the family's corner */}
+      <div className="print-hidden mt-4 flex flex-wrap gap-4">
+        <Link
+          to="/print/memo"
+          className="inline-flex min-h-11 items-center gap-1.5 py-2 font-semibold text-clay-dark underline hover:text-ink"
+        >
+          <ScrollText className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden="true" />
+          Property memorandum for your attorney
+        </Link>
+        <Link
+          to="/print/inventory"
+          className="inline-flex min-h-11 items-center gap-1.5 py-2 font-semibold text-clay-dark underline hover:text-ink"
+        >
+          <FileText className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden="true" />
+          Inventory for estate & insurance professionals
+        </Link>
       </div>
 
       {/* Overview — the stories lead; money never opens a family document */}

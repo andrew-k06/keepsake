@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useStore } from '../store'
 import { Avatar, Button, Card, Field, Pill, inputClass } from '../components/ui'
-import { UserPlus, Lock, Trash2 } from '../components/icons'
+import { UserPlus, Lock, Trash2, LifeBuoy } from '../components/icons'
 import type { Person } from '../types'
 
 const roleTone: Record<string, 'neutral' | 'sage' | 'clay'> = {
@@ -23,7 +23,10 @@ const roleLabel = (role: Person['role']) =>
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export function Family() {
-  const { state, addPerson, updatePerson, removePerson } = useStore()
+  const { state, addPerson, updatePerson, removePerson, setExecutorAccess } = useStore()
+  const trusted = state.executorAccess?.personId
+    ? state.people.find((p) => p.id === state.executorAccess?.personId)
+    : undefined
   const [showInvite, setShowInvite] = useState(false)
   const [name, setName] = useState('')
   const [nameError, setNameError] = useState('')
@@ -179,6 +182,87 @@ export function Family() {
           </Card>
         ))}
       </div>
+
+      {/* Trusted contact — designated now, dormant until verified. Never a
+          silent death-triggered switch; the owner stays in control. */}
+      <Card className="mt-8 p-6">
+        <div className="flex items-center gap-3">
+          <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-clay/10 text-clay">
+            <LifeBuoy className="h-6 w-6" strokeWidth={2} aria-hidden="true" />
+          </span>
+          <h2 className="text-2xl">If something ever happens</h2>
+        </div>
+        {trusted ? (
+          <p className="mt-3 text-ink-soft">
+            <span className="font-semibold text-ink">{trusted.name}</span> is your trusted contact.
+            They see nothing today. If they ever needed access, they would have to send in official
+            papers (a death certificate, or court documents if you couldn’t speak for yourself);
+            after the papers are verified there is a{' '}
+            <span className="font-semibold text-ink">{state.executorAccess?.waitDays}-day waiting period</span>{' '}
+            — you and everyone in this binder would be told, and you could stop it with one word.
+            Even then, access is read-only: no one else can ever change your wishes.
+          </p>
+        ) : (
+          <p className="mt-3 text-ink-soft">
+            You can name one person who could <em>ask</em> for access to this binder if something
+            happened to you. They would see nothing until official papers were verified and a waiting
+            period passed — and you could always say no. Naming someone is optional and takes effect
+            only through that careful process.
+          </p>
+        )}
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <label className="sr-only" htmlFor="trusted-select">
+            Trusted contact
+          </label>
+          <select
+            id="trusted-select"
+            className="rounded-xl border-2 border-line bg-white px-3 py-2.5 font-semibold focus:border-clay outline-none"
+            value={state.executorAccess?.personId ?? ''}
+            onChange={(e) =>
+              e.target.value
+                ? setExecutorAccess({
+                    personId: e.target.value,
+                    protocol: 'verified-documents',
+                    waitDays: state.executorAccess?.waitDays ?? 14,
+                  })
+                : setExecutorAccess(undefined)
+            }
+          >
+            <option value="">No trusted contact named</option>
+            {state.people
+              .filter((p) => p.role !== 'owner')
+              .map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name} ({p.relationship})
+                </option>
+              ))}
+          </select>
+          {trusted && (
+            <select
+              aria-label="Waiting period"
+              className="rounded-xl border-2 border-line bg-white px-3 py-2.5 font-semibold focus:border-clay outline-none"
+              value={state.executorAccess?.waitDays ?? 14}
+              onChange={(e) =>
+                setExecutorAccess({
+                  personId: state.executorAccess!.personId,
+                  protocol: 'verified-documents',
+                  waitDays: Number(e.target.value),
+                })
+              }
+            >
+              {[7, 14, 30].map((d) => (
+                <option key={d} value={d}>
+                  {d}-day waiting period
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
+        <p className="mt-3 text-sm text-ink-soft">
+          This names a contact inside Keepsake only — it doesn’t make anyone your legal executor.
+          That comes from your will; your attorney is the right person to ask.
+        </p>
+      </Card>
 
       <Card className="mt-8 p-6 bg-sage/5 flex items-start gap-4">
         <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-sage/15 text-sage-deep">

@@ -13,6 +13,8 @@ import { Emergency } from './pages/Emergency'
 import { Summary } from './pages/Summary'
 import { Plan } from './pages/Plan'
 import { OfferCheck } from './pages/OfferCheck'
+import { PrintMemo } from './pages/PrintMemo'
+import { PrintInventory } from './pages/PrintInventory'
 
 function NotFound() {
   return (
@@ -45,6 +47,8 @@ function App() {
         <Route path="/summary" element={<Summary />} />
         <Route path="/plan" element={<Plan />} />
         <Route path="/check" element={<OfferCheck />} />
+        <Route path="/print/memo" element={<PrintMemo />} />
+        <Route path="/print/inventory" element={<PrintInventory />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Layout>

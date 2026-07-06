@@ -1,19 +1,33 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useStore, money } from '../store'
 import { bestAmount, isAppraised, makeValuation } from '../lib/value'
-import { AppraisalBadge, Button, Card } from '../components/ui'
+import { AppraisalBadge, Button, Card, DemoTag, Pill } from '../components/ui'
 import { ItemVisual } from '../components/ItemVisual'
-import { Camera, MapPin, CircleCheckBig, Shield, ArrowRight, type LucideIcon } from '../components/icons'
+import { Camera, MapPin, CircleCheckBig, Shield, ArrowRight, BadgeCheck, type LucideIcon } from '../components/icons'
+import { APPRAISERS } from '../data/appraisers'
 import type { Item } from '../types'
 
 export function Appraisals() {
-  const { state, updateItem } = useStore()
+  const { state, updateItem, logEvent } = useStore()
+  const [directoryFor, setDirectoryFor] = useState<Item | null>(null)
+  const [bookedWith, setBookedWith] = useState<string | null>(null)
 
   const pending = state.items.filter(
     (it) => it.appraisalStatus === 'requested' || it.appraisalStatus === 'photo-review',
   )
   const inPerson = state.items.filter((it) => it.appraisalStatus === 'needs-in-person')
   const done = state.items.filter((it) => it.appraisalStatus === 'appraised')
+
+  const openDirectory = (it: Item) => {
+    setDirectoryFor(it)
+    setBookedWith(null)
+  }
+  const book = (appraiserName: string) => {
+    if (!directoryFor) return
+    setBookedWith(appraiserName)
+    logEvent(`You asked ${appraiserName} about an in-person appraisal of “${directoryFor.name}”`)
+  }
 
   return (
     <div>
@@ -54,12 +68,64 @@ export function Appraisals() {
         icon={MapPin}
         empty="No items need an in-person visit."
         items={inPerson}
-        action={() => (
-          <Button variant="secondary" onClick={() => alert('In the full app, this finds certified appraisers near you and books a visit.')}>
+        action={(it) => (
+          <Button variant="secondary" onClick={() => openDirectory(it)}>
             Find a local appraiser
           </Button>
         )}
       />
+
+      {/* Appraiser directory — item-scoped, credential-badged, conflict-free */}
+      {directoryFor && (
+        <Card className="mt-6 border-2 border-line-strong p-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-2xl">Appraisers near you for “{directoryFor.name}”</h2>
+            <DemoTag>Preview directory — example professionals</DemoTag>
+          </div>
+          <p className="mt-2 text-ink-soft">
+            Everyone listed is accreditation-verified (ISA, ASA, or AAA), current on USPAP standards,
+            insured — and none of them ever buys what they appraise, so their number is honest. They
+            would see only this item’s photos, and your address only after you confirm a visit.
+          </p>
+          <div className="mt-4 space-y-3">
+            {APPRAISERS.map((a) => (
+              <div key={a.id} className="flex flex-wrap items-center gap-4 rounded-2xl border border-line bg-white p-4">
+                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-sage/15 text-sage-deep">
+                  <BadgeCheck className="h-6 w-6" strokeWidth={2} aria-hidden="true" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-lg font-semibold">
+                    {a.name} <span className="font-normal text-ink-soft">· {a.distance}</span>
+                  </p>
+                  <p className="text-sm text-ink-soft">
+                    {a.credentials} · {a.yearsExperience} years · {a.specialties.join(', ')}
+                  </p>
+                  <p className="text-sm text-ink-soft">In person: {a.visitFee}. Photo review: ${a.photoFee}.</p>
+                </div>
+                {bookedWith === a.name ? (
+                  <Pill tone="sage">Request sent (preview)</Pill>
+                ) : (
+                  <Button variant="secondary" onClick={() => book(a.name)}>
+                    Ask about a visit
+                  </Button>
+                )}
+              </div>
+            ))}
+          </div>
+          {bookedWith && (
+            <p className="mt-4 rounded-2xl bg-sage/10 px-4 py-3 text-ink-soft">
+              In the full app, {bookedWith} would call you within two business days to arrange the
+              visit and confirm the price in writing first. Nothing is booked or shared in this
+              preview.
+            </p>
+          )}
+          <div className="mt-4">
+            <Button variant="ghost" onClick={() => setDirectoryFor(null)}>
+              Close
+            </Button>
+          </div>
+        </Card>
+      )}
 
       <Section title="Appraised" icon={CircleCheckBig} empty="No completed appraisals yet." items={done} />
 

@@ -34,7 +34,7 @@ import {
 
 export function ItemDetail() {
   const { itemId = '' } = useParams()
-  const { itemById, personById, roomById, state, updateItem, deleteItem } = useStore()
+  const { itemById, personById, roomById, state, updateItem, deleteItem, addMemory } = useStore()
   const navigate = useNavigate()
   const item = itemById(itemId)
 
@@ -42,6 +42,9 @@ export function ItemDetail() {
   const [storyDraft, setStoryDraft] = useState('')
   const [showInsuranceInfo, setShowInsuranceInfo] = useState(false)
   const [showAppraisalPlan, setShowAppraisalPlan] = useState(false)
+  const [addingMemory, setAddingMemory] = useState(false)
+  const [memoryPersonId, setMemoryPersonId] = useState('')
+  const [memoryText, setMemoryText] = useState('')
 
   if (!item) {
     return (
@@ -170,6 +173,82 @@ export function ItemDetail() {
               </p>
             )}
           </Card>
+
+          {/* Family memories — the heirs' side of the story, added while
+              everyone is here to read them */}
+          <div className="mt-6">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-ink-soft">
+                <HeartHandshake className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden="true" />
+                Family memories
+              </div>
+              {!addingMemory && (
+                <button
+                  onClick={() => setAddingMemory(true)}
+                  className="inline-flex min-h-11 items-center gap-1.5 px-2 py-2 text-sm font-semibold text-ink-soft hover:text-ink"
+                >
+                  <Pencil className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
+                  Add a memory
+                </button>
+              )}
+            </div>
+            {(item.memories ?? []).length === 0 && !addingMemory && (
+              <p className="mt-2 text-ink-soft">
+                Family can add their own memories of this — while everyone is here to read them.
+              </p>
+            )}
+            {(item.memories ?? []).map((m) => {
+              const author = personById(m.personId)
+              return (
+                <div key={m.id} className="mt-2 rounded-2xl border border-line bg-white px-4 py-3">
+                  <p className="italic">“{m.text}”</p>
+                  <p className="mt-1 text-sm text-ink-soft">
+                    — {author ? `${author.name}${author.relationship !== 'Me' ? ` (${author.relationship})` : ''}` : 'Family'}
+                  </p>
+                </div>
+              )
+            })}
+            {addingMemory && (
+              <div className="mt-3 rounded-2xl border border-line bg-white p-4">
+                <label className="block">
+                  <span className="mb-1 block text-sm font-semibold">Who is remembering?</span>
+                  <select
+                    className={inputClass}
+                    value={memoryPersonId}
+                    onChange={(e) => setMemoryPersonId(e.target.value)}
+                  >
+                    <option value="">Choose…</option>
+                    {state.people.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.relationship === 'Me' ? `${p.name} (me)` : `${p.name} (${p.relationship})`}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <textarea
+                  className={`${inputClass} mt-3 min-h-20`}
+                  value={memoryText}
+                  onChange={(e) => setMemoryText(e.target.value)}
+                  placeholder="What do you remember about it?"
+                />
+                <div className="mt-3 flex justify-end gap-3">
+                  <Button variant="ghost" onClick={() => setAddingMemory(false)}>
+                    Cancel
+                  </Button>
+                  <Button
+                    disabled={!memoryPersonId || !memoryText.trim()}
+                    onClick={() => {
+                      addMemory(item.id, memoryPersonId, memoryText.trim())
+                      setMemoryText('')
+                      setAddingMemory(false)
+                    }}
+                  >
+                    Keep this memory
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Facts */}
           <dl className="mt-6 grid grid-cols-2 gap-4">
