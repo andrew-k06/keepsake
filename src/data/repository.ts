@@ -30,6 +30,23 @@ export function migrate(raw: unknown): BinderState | null {
   const items = (s.items as Array<Record<string, unknown>>).map(migrateItem)
   const trash = Array.isArray(s.trash) ? (s.trash as Array<Record<string, unknown>>).map(migrateItem) : []
 
+  // Partial preparedness (from builds before celebrations/steps shipped) must
+  // never crash later dereferences — default every field.
+  let preparedness: BinderState['preparedness']
+  if (s.preparedness && typeof s.preparedness === 'object') {
+    const p = s.preparedness as Record<string, unknown>
+    preparedness = {
+      startedAt: typeof p.startedAt === 'string' ? p.startedAt : undefined,
+      lastVisitAt: typeof p.lastVisitAt === 'string' ? p.lastVisitAt : undefined,
+      lastStepId: typeof p.lastStepId === 'string' ? p.lastStepId : undefined,
+      togetherWithId: typeof p.togetherWithId === 'string' ? p.togetherWithId : undefined,
+      steps: (p.steps && typeof p.steps === 'object' ? p.steps : {}) as NonNullable<
+        BinderState['preparedness']
+      >['steps'],
+      celebrated: Array.isArray(p.celebrated) ? (p.celebrated as string[]) : [],
+    }
+  }
+
   return {
     isDemo: s.isDemo === true,
     ownerName: String(s.ownerName ?? 'Friend'),
@@ -40,9 +57,9 @@ export function migrate(raw: unknown): BinderState | null {
     trash,
     people: (s.people as BinderState['people']) ?? [],
     emergency: (s.emergency as BinderState['emergency']) ?? [],
-    audit: (s.audit as BinderState['audit']) ?? [],
+    audit: Array.isArray(s.audit) ? (s.audit as BinderState['audit']) : [],
     executorAccess: s.executorAccess as BinderState['executorAccess'],
-    preparedness: s.preparedness as BinderState['preparedness'],
+    preparedness,
   }
 }
 
@@ -72,8 +89,17 @@ function migrateItem(it: Record<string, unknown>): Item {
       })
     }
   }
-  const { estValue: _e, appraisedValue: _a, ...rest } = it
-  return { ...(rest as unknown as Item), valuations }
+  // Drop deprecated fields; default anything the UI dereferences.
+  const { estValue: _e, appraisedValue: _a, emoji: _emoji, ...rest } = it
+  const item = rest as unknown as Item
+  return {
+    ...item,
+    valuations,
+    documents: Array.isArray(item.documents) ? item.documents : [],
+    memories: Array.isArray(item.memories) ? item.memories : undefined,
+    appraisalStatus: item.appraisalStatus ?? 'none',
+    story: typeof item.story === 'string' ? item.story : '',
+  }
 }
 
 // ---- IndexedDB adapter ------------------------------------------------------

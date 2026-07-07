@@ -1,7 +1,9 @@
+import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
+import { exportBinder, readBackupFile } from '../lib/backup'
 import { Button, Card, DemoTag, Pill } from '../components/ui'
-import { BookHeart, Gift, TrendingUp, CircleCheckBig } from '../components/icons'
+import { BookHeart, Gift, TrendingUp, CircleCheckBig, FileText, Undo2 } from '../components/icons'
 import { STARTER_ITEM_LIMIT } from '../types'
 
 /**
@@ -12,8 +14,31 @@ import { STARTER_ITEM_LIMIT } from '../types'
  */
 export function Plan() {
   const navigate = useNavigate()
-  const { state, setPlan } = useStore()
+  const { state, setPlan, logEvent, replaceBinder } = useStore()
   const tier = state.plan.tier
+  const importRef = useRef<HTMLInputElement>(null)
+  const [importError, setImportError] = useState('')
+
+  const doExport = () => {
+    exportBinder(state)
+    logEvent('You downloaded a backup of your binder')
+  }
+
+  const doImport = async (file: File) => {
+    setImportError('')
+    try {
+      const next = await readBackupFile(file)
+      if (
+        window.confirm(
+          `Restore “${next.binderName}” from this file? Your current binder (${state.binderName}) will be replaced.`,
+        )
+      ) {
+        replaceBinder(next)
+      }
+    } catch (e) {
+      setImportError(e instanceof Error ? e.message : 'That file could not be read.')
+    }
+  }
 
   const activate = (t: 'binder' | 'family') => {
     setPlan({
@@ -112,6 +137,40 @@ export function Plan() {
           </p>
         </Card>
       )}
+
+      {/* Your data — the export that makes "always yours" literal */}
+      <Card className="mt-8 p-6">
+        <h2 className="text-2xl">Your binder is yours</h2>
+        <p className="mt-2 text-ink-soft">
+          Download everything — photos, stories, wishes, notes — as one file you keep. It works on
+          any plan, forever, and you can bring it back here (or take it anywhere else) whenever you
+          like.
+        </p>
+        <div className="mt-4 flex flex-wrap gap-3">
+          <Button variant="secondary" icon={FileText} onClick={doExport}>
+            Download everything
+          </Button>
+          <Button variant="ghost" icon={Undo2} onClick={() => importRef.current?.click()}>
+            Restore from a backup file
+          </Button>
+          <input
+            ref={importRef}
+            type="file"
+            accept="application/json,.json"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0]
+              if (f) void doImport(f)
+              e.target.value = ''
+            }}
+          />
+        </div>
+        {importError && (
+          <p aria-live="polite" className="mt-3 font-semibold text-clay-dark">
+            {importError}
+          </p>
+        )}
+      </Card>
 
       <p className="mt-8 text-sm text-ink-soft">
         Our promise: one plain price, no countdown timers, no surprise renewals, and cancelling the

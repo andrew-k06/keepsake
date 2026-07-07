@@ -36,7 +36,7 @@ const nav: NavEntry[] = [
 ]
 
 export function Layout({ children }: { children: ReactNode }) {
-  const { state, saveError } = useStore()
+  const { state, saveError, otherTabWrote } = useStore()
   const location = useLocation()
   // Full-bleed screens (welcome, onboarding, printable documents) get no chrome.
   if (
@@ -54,6 +54,20 @@ export function Layout({ children }: { children: ReactNode }) {
           className="print-hidden fixed inset-x-0 top-0 z-50 border-b-2 border-clay-dark bg-clay/10 px-5 py-3 text-center font-semibold text-clay-dark backdrop-blur"
         >
           {saveError}
+        </div>
+      )}
+      {!saveError && otherTabWrote && (
+        <div
+          role="alert"
+          className="print-hidden fixed inset-x-0 top-0 z-50 flex items-center justify-center gap-3 border-b-2 border-amber-deep bg-amber/15 px-5 py-3 font-semibold text-amber-deep backdrop-blur"
+        >
+          <span>This binder was changed in another window.</span>
+          <button
+            onClick={() => window.location.reload()}
+            className="rounded-xl border-2 border-amber-deep px-3 py-1 hover:bg-amber/20"
+          >
+            Show the latest
+          </button>
         </div>
       )}
       {/* Sidebar (desktop) */}

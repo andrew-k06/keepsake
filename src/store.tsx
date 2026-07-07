@@ -46,6 +46,10 @@ interface StoreApi {
   markCelebrated: (stepId: string) => void
   /** Record an activity line (prints, exports, checks) in the binder's history. */
   logEvent: (action: string) => void
+  /** Replace the whole binder (backup import). Caller confirms first. */
+  replaceBinder: (next: BinderState) => void
+  /** True when another tab/window wrote the binder — reload to see it. */
+  otherTabWrote: boolean
   resetDemo: () => void
   /** Start a brand-new, empty binder (optionally set up as a gift). */
   startFresh: (ownerName: string, opts?: { giftFrom?: string }) => void
@@ -136,6 +140,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<BinderState | null>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
 
+  // Ask the browser to protect our storage from eviction — without this,
+  // iOS/Safari can silently drop IndexedDB after ~7 days of disuse, and this
+  // product's cadence is one Sunday a month.
+  useEffect(() => {
+    void navigator.storage?.persist?.().catch(() => {})
+  }, [])
+
   // Async boot: load from the repository; seed the demo binder on first run.
   useEffect(() => {
     let cancelled = false
@@ -157,6 +168,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   // belongs to a newer save — matters under the localStorage fallback.
   const saveSeq = useRef(0)
   const latestState = useRef<BinderState | null>(null)
+  const [otherTabWrote, setOtherTabWrote] = useState(false)
+  const tabId = useRef(Math.random().toString(36).slice(2))
+  const channel = useRef<BroadcastChannel | null>(null)
+  useEffect(() => {
+    if (typeof BroadcastChannel === 'undefined') return
+    const ch = new BroadcastChannel('keepsake-binder')
+    channel.current = ch
+    ch.onmessage = (e) => {
+      if (e.data?.tab && e.data.tab !== tabId.current) setOtherTabWrote(true)
+    }
+    return () => ch.close()
+  }, [])
   useEffect(() => {
     if (!state) return
     latestState.current = state
@@ -165,6 +188,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       .save(state)
       .then(() => {
         if (seq === saveSeq.current) setSaveError(null)
+        channel.current?.postMessage({ tab: tabId.current })
       })
       .catch(() => {
         if (seq === saveSeq.current)
@@ -423,6 +447,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           return { ...s, preparedness: { ...prep, celebrated: [...prep.celebrated, stepId] } }
         }),
       logEvent: (action) => set((s) => withAudit(s, action)),
+      replaceBinder: (next) =>
+        setState(
+          withAudit(
+            purgeTrash({ ...next, isDemo: false }),
+            'You restored this binder from a backup file',
+          ),
+        ),
+      otherTabWrote,
       resetDemo: () => setState(seedState),
       startFresh: (ownerName, opts) => setState(emptyBinder(ownerName, opts)),
       itemById: (itemId) => state.items.find((it) => it.id === itemId),
@@ -430,7 +462,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       roomById: (roomId) => state.rooms.find((r) => r.id === roomId),
       itemsInRoom: (roomId) => state.items.filter((it) => it.roomId === roomId),
     }
-  }, [state, saveError])
+  }, [state, saveError, otherTabWrote])
 
   if (!api) {
     return (
