@@ -119,10 +119,10 @@ img {
    Hide app chrome, drop decoration, force white, and show print-only blocks
    (e.g. the wishes-not-a-will disclaimer footer). */
 
-/* Real page margins — content must never run toward the paper's edge. */
+/* Real page margins — the Word-standard 1 inch on all sides. */
 @page {
   size: letter;
-  margin: 0.85in 0.9in;
+  margin: 1in;
 }
 
 @media print {
