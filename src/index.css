@@ -157,6 +157,45 @@ img {
   .print-avoid-break {
     break-inside: avoid;
   }
+
+  /* Designed print documents (/print/*): each .sheet is one page. On paper
+     the on-screen "page" styling disappears and real page breaks take over. */
+  .sheet {
+    break-after: page;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    min-height: 0 !important;
+  }
+  /* last-of-type, not last-child: the running-footer div follows the final
+     sheet in the DOM and would otherwise leave a trailing blank page */
+  .sheet:last-of-type {
+    break-after: auto;
+  }
+  /* Running footer on every printed page. */
+  .print-running-footer {
+    display: flex !important;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    justify-content: space-between;
+    font-size: 9pt;
+    color: #6b6157;
+    border-top: 1px solid #e6dcc9;
+    padding-top: 4px;
+    background: #fff;
+  }
+  .has-running-footer {
+    padding-bottom: 28px;
+  }
+}
+
+/* On screen, print documents preview as paper: white sheets on the cream bg. */
+.print-running-footer {
+  display: none;
 }
 
 /* Print-only blocks are invisible on screen */

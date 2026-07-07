@@ -16,6 +16,7 @@ import { OfferCheck } from './pages/OfferCheck'
 import { Guide } from './pages/Guide'
 import { PrintMemo } from './pages/PrintMemo'
 import { PrintInventory } from './pages/PrintInventory'
+import { PrintBinder } from './pages/PrintBinder'
 
 function NotFound() {
   return (
@@ -49,6 +50,7 @@ function App() {
         <Route path="/plan" element={<Plan />} />
         <Route path="/check" element={<OfferCheck />} />
         <Route path="/guide" element={<Guide />} />
+        <Route path="/print/binder" element={<PrintBinder />} />
         <Route path="/print/memo" element={<PrintMemo />} />
         <Route path="/print/inventory" element={<PrintInventory />} />
         <Route path="*" element={<NotFound />} />

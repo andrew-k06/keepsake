@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useStore, money } from '../store'
 import { bestAmount } from '../lib/value'
 import { Button, Card, Avatar } from '../components/ui'
@@ -8,6 +8,7 @@ import { Printer, Mail, Heart, ScrollText, FileText } from '../components/icons'
 
 export function Summary() {
   const { state, logEvent, completeStep } = useStore()
+  const navigate = useNavigate()
   const [showValues, setShowValues] = useState(false)
 
   const heirs = state.people.filter((p) => p.role !== 'owner')
@@ -56,14 +57,8 @@ export function Summary() {
       </p>
 
       <div className="print-hidden mt-5 flex flex-wrap items-center gap-3">
-        <Button
-          icon={Printer}
-          onClick={() => {
-            logEvent('You printed the family summary')
-            completeStep('share-summary')
-            window.print()
-          }}
-        >
+        {/* Opens the designed document: cover, contents, a page per person */}
+        <Button icon={Printer} onClick={() => navigate('/print/binder')}>
           Print this binder
         </Button>
         <Button
