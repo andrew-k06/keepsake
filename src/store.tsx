@@ -104,7 +104,22 @@ export function emptyBinder(ownerName: string, opts: { giftFrom?: string } = {})
     audit: opts.giftFrom
       ? [{ id: id('a'), at: new Date().toISOString(), action: `${opts.giftFrom.trim()} set this binder up as a gift` }]
       : [],
+    // A gifted binder opens on the guide IN Together mode — the giver's
+    // first visit is chapter one with the script in hand.
+    preparedness: opts.giftFrom
+      ? { ...emptyPreparedness(), togetherWithId: 'p-gifter' }
+      : undefined,
   }
+}
+
+/** Lazily create the preparedness slice OUTSIDE of startPath. Pre-credits
+    everything the binder already satisfies so a later first visit to the
+    Guide never fires a celebration barrage for work life already did. */
+function ensurePrep(s: BinderState) {
+  if (s.preparedness) return s.preparedness
+  const prep = emptyPreparedness()
+  prep.celebrated = STEPS.filter((st) => stepDone(s, st)).map((st) => st.id)
+  return prep
 }
 
 /** Append an audit line, keeping the record bounded. */
@@ -116,14 +131,15 @@ function withAudit(s: BinderState, action: string): BinderState {
 }
 
 export function StoreProvider({ children }: { children: ReactNode }) {
-  const repo = useRef(createRepository())
+  const repo = useRef<ReturnType<typeof createRepository> | null>(null)
+  if (!repo.current) repo.current = createRepository()
   const [state, setState] = useState<BinderState | null>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
 
   // Async boot: load from the repository; seed the demo binder on first run.
   useEffect(() => {
     let cancelled = false
-    repo.current
+    repo.current!
       .load()
       .then((loaded) => {
         if (!cancelled) setState(purgeTrash(loaded ?? seedState))
@@ -136,18 +152,40 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  // Write-through persistence; failures surface, never vanish.
+  // Write-through persistence; failures surface, never vanish. The sequence
+  // guard keeps a slow, early save from clearing (or raising) a banner that
+  // belongs to a newer save — matters under the localStorage fallback.
+  const saveSeq = useRef(0)
+  const latestState = useRef<BinderState | null>(null)
   useEffect(() => {
     if (!state) return
-    repo.current
+    latestState.current = state
+    const seq = ++saveSeq.current
+    repo.current!
       .save(state)
-      .then(() => setSaveError(null))
-      .catch(() =>
-        setSaveError(
-          'We could not save your latest change on this device — its storage may be full. Your binder is still open; please free some space, then make a small change to save again.',
-        ),
-      )
+      .then(() => {
+        if (seq === saveSeq.current) setSaveError(null)
+      })
+      .catch(() => {
+        if (seq === saveSeq.current)
+          setSaveError(
+            'We could not save your latest change on this device — its storage may be full. Your binder is still open; please free some space, then make a small change to save again.',
+          )
+      })
   }, [state])
+
+  // Best-effort flush when the tab is hidden or closing: a save already in
+  // flight may not finish, so fire one more with the latest state.
+  useEffect(() => {
+    const flush = () => {
+      if (latestState.current) void repo.current!.save(latestState.current).catch(() => {})
+    }
+    window.addEventListener('pagehide', flush)
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') flush()
+    })
+    return () => window.removeEventListener('pagehide', flush)
+  }, [])
 
   const api = useMemo<StoreApi | null>(() => {
     if (!state) return null
@@ -289,12 +327,26 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           ),
         ),
       updateEmergency: (entryId, patch) =>
-        set((s) => ({
-          ...s,
-          emergency: s.emergency.map((e) => (e.id === entryId ? { ...e, ...patch } : e)),
-        })),
+        set((s) => {
+          const entry = s.emergency.find((e) => e.id === entryId)
+          if (!entry) return s
+          return withAudit(
+            {
+              ...s,
+              emergency: s.emergency.map((e) => (e.id === entryId ? { ...e, ...patch } : e)),
+            },
+            `You updated the emergency note “${entry.label}”`,
+          )
+        }),
       deleteEmergency: (entryId) =>
-        set((s) => ({ ...s, emergency: s.emergency.filter((e) => e.id !== entryId) })),
+        set((s) => {
+          const entry = s.emergency.find((e) => e.id === entryId)
+          if (!entry) return s
+          return withAudit(
+            { ...s, emergency: s.emergency.filter((e) => e.id !== entryId) },
+            `You deleted the emergency note “${entry.label}”`,
+          )
+        }),
       setPlan: (plan) =>
         set((s) =>
           withAudit({ ...s, plan }, plan.tier === 'starter' ? 'Plan changed' : `You activated the ${plan.tier === 'binder' ? 'Keepsake Binder' : 'Family Plan'}`),
@@ -322,7 +374,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         set((s) => {
           const step = STEPS.find((st) => st.id === stepId)
           if (!step) return s
-          const prep = s.preparedness ?? emptyPreparedness()
+          const prep = ensurePrep(s)
           if (prep.steps[stepId]?.status === 'done') return s
           const together = prep.togetherWithId
           const who = together ? s.people.find((p) => p.id === together)?.name : undefined
@@ -344,7 +396,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         }),
       skipStep: (stepId) =>
         set((s) => {
-          const prep = s.preparedness ?? emptyPreparedness()
+          const prep = ensurePrep(s)
           if (prep.steps[stepId]?.status === 'done') return s
           // "Not today" is remembered, never audited — no shame trail.
           return {
@@ -359,14 +411,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         }),
       setTogether: (personId) =>
         set((s) => {
-          const prep = s.preparedness ?? emptyPreparedness()
+          const prep = ensurePrep(s)
           const who = personId ? s.people.find((p) => p.id === personId)?.name : undefined
           const next = { ...s, preparedness: { ...prep, togetherWithId: personId } }
           return who ? withAudit(next, `You started a visit together with ${who}`) : next
         }),
       markCelebrated: (stepId) =>
         set((s) => {
-          const prep = s.preparedness ?? emptyPreparedness()
+          const prep = ensurePrep(s)
           if (prep.celebrated.includes(stepId)) return s
           return { ...s, preparedness: { ...prep, celebrated: [...prep.celebrated, stepId] } }
         }),

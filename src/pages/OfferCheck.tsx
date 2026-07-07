@@ -27,6 +27,7 @@ export function OfferCheck() {
   const [customValue, setCustomValue] = useState('')
   const [offer, setOffer] = useState('')
   const [checked, setChecked] = useState(false)
+  const [valueError, setValueError] = useState('')
 
   const custom = itemId === 'other'
   const item = custom ? undefined : state.items.find((it) => it.id === itemId)
@@ -67,6 +68,16 @@ export function OfferCheck() {
 
   const runCheck = () => {
     if (!subject || offerNum == null) return
+    // Never a silent click: without any value to compare against there is no
+    // honest verdict — say so, and don't credit a check that never happened.
+    if (!marketSnapshot(subject)) {
+      setValueError(
+        'To compare the offer, we need your rough sense of what it’s worth — even a guess helps.',
+      )
+      setChecked(false)
+      return
+    }
+    setValueError('')
     setChecked(true)
     completeStep('offer-check-try')
     logEvent(`You checked an offer of ${money(offerNum)} on “${subject.name}”`)
@@ -148,7 +159,7 @@ export function OfferCheck() {
                   ))}
                 </select>
               </Field>
-              <Field label="Your sense of its value (optional)">
+              <Field label="Your sense of its value" error={valueError}>
                 <input
                   className={inputClass}
                   inputMode="numeric"
@@ -156,6 +167,7 @@ export function OfferCheck() {
                   onChange={(e) => {
                     setCustomValue(e.target.value.replace(/[^0-9]/g, ''))
                     setChecked(false)
+                    if (e.target.value) setValueError('')
                   }}
                   placeholder="800"
                 />

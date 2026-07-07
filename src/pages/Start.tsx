@@ -17,9 +17,10 @@ export function Start() {
   const [error, setError] = useState('')
 
   // If the current binder already has the user's own items, replacing it must
-  // be a deliberate, explained choice — never a silent wipe.
+  // be a deliberate, explained choice — never a silent wipe. The demo check is
+  // an explicit flag, never a name match (real users are named Margaret too).
   const hasExistingData = state.items.length > 0 || state.emergency.length > 0
-  const isDemo = state.ownerName === 'Margaret'
+  const isDemo = state.isDemo === true
 
   const begin = () => {
     if (!name.trim()) {

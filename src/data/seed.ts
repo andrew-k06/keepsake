@@ -3,6 +3,7 @@ import type { BinderState } from '../types'
 // Seed binder — a realistic, warm sample so the app feels alive in a live demo.
 // Item images are reliably-hosted Unsplash CDN photos (verified HTTP 200, image/jpeg).
 export const seedState: BinderState = {
+  isDemo: true,
   ownerName: 'Margaret',
   binderName: "Margaret's Binder",
   // The demo shows the full product — Sarah set it up as a gift and pays for

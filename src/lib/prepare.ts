@@ -99,7 +99,7 @@ export const STEPS: GuideStep[] = [
     route: '/emergency',
     togetherScript: 'Ask: “If something happened tonight, who should the neighbors call first? And who after that?”',
     celebrate: 'Now the first hour has a plan. That’s a real gift.',
-    isDone: (s) => hasNote(s, /call first|who to call|attorney|call sarah|call my/i),
+    isDone: (s) => hasNote(s, /\bcall\b|attorney|who to reach/i),
   },
   {
     id: 'note-medical',

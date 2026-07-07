@@ -68,8 +68,10 @@ export function TrendCard({ item, familyPlan }: { item: Item; familyPlan: boolea
         {snap.basis} <DemoTag>Example data</DemoTag>
       </p>
       <p className="mt-2 text-sm text-ink-soft">
-        These ranges are for information, not an appraisal or advice — before selling or insuring,
-        see the appraisal recommendation below.
+        These ranges are for information, not an appraisal or advice.
+        {item.appraisalStatus === 'none' && (
+          <> Before selling or insuring, see the appraisal recommendation below.</>
+        )}
       </p>
     </Card>
   )

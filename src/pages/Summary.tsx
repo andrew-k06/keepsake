@@ -65,9 +65,9 @@ export function Summary() {
           variant="secondary"
           icon={Mail}
           onClick={() => {
+            shareByEmail()
             logEvent('You shared the family summary by email')
             completeStep('share-summary')
-            shareByEmail()
           }}
         >
           Share by email

@@ -134,6 +134,9 @@ export interface PreparednessState {
 }
 
 export interface BinderState {
+  /** True only for the seeded example binder (Margaret). Never inferred from
+      names — a real user named Margaret must get every confirmation. */
+  isDemo?: boolean
   ownerName: string
   binderName: string
   plan: Plan

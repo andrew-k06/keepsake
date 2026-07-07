@@ -31,6 +31,7 @@ export function migrate(raw: unknown): BinderState | null {
   const trash = Array.isArray(s.trash) ? (s.trash as Array<Record<string, unknown>>).map(migrateItem) : []
 
   return {
+    isDemo: s.isDemo === true,
     ownerName: String(s.ownerName ?? 'Friend'),
     binderName: String(s.binderName ?? 'My Binder'),
     plan: (s.plan as BinderState['plan']) ?? { tier: 'starter' },

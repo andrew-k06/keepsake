@@ -31,9 +31,11 @@ export function PrintBinder() {
   const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
 
   const print = () => {
+    // window.print() blocks until the dialog closes — credit the step and
+    // write the activity line after the act, not on intent.
+    window.print()
     logEvent('You printed the family binder')
     completeStep('share-summary')
-    window.print()
   }
 
   return (
