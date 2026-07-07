@@ -118,10 +118,18 @@ img {
 /* ---- Print: the printed binder is a deliverable, not an afterthought ----
    Hide app chrome, drop decoration, force white, and show print-only blocks
    (e.g. the wishes-not-a-will disclaimer footer). */
+
+/* Real page margins — content must never run toward the paper's edge. */
+@page {
+  size: letter;
+  margin: 0.85in 0.9in;
+}
+
 @media print {
   body {
     background: #fff;
-    font-size: 12pt;
+    font-size: 11.5pt;
+    line-height: 1.5;
   }
   .print-hidden,
   nav,
@@ -173,6 +181,47 @@ img {
      sheet in the DOM and would otherwise leave a trailing blank page */
   .sheet:last-of-type {
     break-after: auto;
+  }
+
+  /* Screen type is senior-large (18px base); on paper that reads oversized.
+     Rescale the document type to book proportions. Element+class selectors
+     out-rank the Tailwind size utilities. */
+  .sheet {
+    font-size: 11.5pt;
+    line-height: 1.5;
+  }
+  .sheet h1 {
+    font-size: 26pt;
+  }
+  .sheet h2 {
+    font-size: 16pt;
+  }
+  .sheet h3 {
+    font-size: 12.5pt;
+  }
+  .sheet .text-5xl {
+    font-size: 26pt;
+  }
+  .sheet .text-4xl {
+    font-size: 20pt;
+  }
+  .sheet .text-3xl {
+    font-size: 16pt;
+  }
+  .sheet .text-2xl {
+    font-size: 14pt;
+  }
+  .sheet .text-xl {
+    font-size: 12.5pt;
+  }
+  .sheet .text-lg {
+    font-size: 11.5pt;
+  }
+  .sheet .text-base {
+    font-size: 11.5pt;
+  }
+  .sheet .text-sm {
+    font-size: 9.5pt;
   }
   /* Running footer on every printed page. */
   .print-running-footer {

@@ -61,7 +61,7 @@ export function PrintBinder() {
       </div>
 
       {/* ---- Cover ---- */}
-      <section className="sheet mb-8 flex min-h-[60vh] flex-col items-center justify-center rounded-3xl border border-line bg-white p-12 text-center shadow-soft">
+      <section className="sheet mb-8 flex min-h-[60vh] flex-col items-center justify-center rounded-3xl border border-line bg-white p-10 text-center shadow-soft">
         <span className="grid h-16 w-16 place-items-center rounded-3xl bg-clay text-white">
           <BookHeart className="h-8 w-8" strokeWidth={1.75} aria-hidden="true" />
         </span>
@@ -78,9 +78,9 @@ export function PrintBinder() {
       </section>
 
       {/* ---- Table of contents ---- */}
-      <section className="sheet mb-8 rounded-3xl border border-line bg-white p-12 shadow-soft">
+      <section className="sheet mb-8 rounded-3xl border border-line bg-white p-10 shadow-soft">
         <h2 className="font-serif text-3xl">What’s inside</h2>
-        <ul className="mt-8 space-y-5">
+        <ul className="mt-6 space-y-4">
           {heirs.map(({ person, items }) => (
             <TocLine
               key={person.id}
@@ -105,7 +105,7 @@ export function PrintBinder() {
           )}
           <TocLine title="A note about this document" sub="please read" right="last page" />
         </ul>
-        <p className="mt-10 text-ink-soft">
+        <p className="mt-8 text-ink-soft">
           Each person has their own pages. Read yours first — then, if you like, read everyone
           else’s. The stories are the point.
         </p>
@@ -126,7 +126,7 @@ export function PrintBinder() {
 
       {/* ---- Still being decided ---- */}
       {unassigned.length > 0 && (
-        <section className="sheet mb-8 rounded-3xl border border-line bg-white p-12 shadow-soft">
+        <section className="sheet mb-8 rounded-3xl border border-line bg-white p-10 shadow-soft">
           <h2 className="font-serif text-3xl">Still being decided</h2>
           <p className="mt-2 text-ink-soft">
             {state.ownerName} hasn’t decided on these yet — which makes them a lovely thing to ask
@@ -155,7 +155,7 @@ export function PrintBinder() {
 
       {/* ---- Emergency guide ---- */}
       {state.emergency.length > 0 && (
-        <section className="sheet mb-8 rounded-3xl border border-line bg-white p-12 shadow-soft">
+        <section className="sheet mb-8 rounded-3xl border border-line bg-white p-10 shadow-soft">
           <h2 className="font-serif text-3xl">In an emergency</h2>
           <p className="mt-2 text-ink-soft">
             The practical things {state.ownerName} wanted you to know — so you always know what to do.
@@ -172,7 +172,7 @@ export function PrintBinder() {
       )}
 
       {/* ---- Closing note ---- */}
-      <section className="sheet rounded-3xl border border-line bg-white p-12 shadow-soft">
+      <section className="sheet rounded-3xl border border-line bg-white p-10 shadow-soft">
         <h2 className="font-serif text-3xl">A note about this document</h2>
         <p className="mt-4 leading-relaxed">
           This binder records {state.ownerName}’s wishes so the family understands what each thing
@@ -201,7 +201,7 @@ export function PrintBinder() {
 function TocLine({ title, sub, right }: { title: string; sub?: string; right: string }) {
   return (
     <li className="flex items-baseline gap-3">
-      <span className="text-xl font-semibold">
+      <span className="text-lg font-semibold">
         {title}
         {sub && <span className="ml-2 text-base font-normal text-ink-soft">· {sub}</span>}
       </span>
@@ -227,19 +227,19 @@ function PersonSheet({
   personName: (id: string) => string | undefined
 }) {
   return (
-    <section className="sheet mb-8 rounded-3xl border border-line bg-white p-12 shadow-soft">
+    <section className="sheet mb-8 rounded-3xl border border-line bg-white p-10 shadow-soft">
       <p className="text-sm font-semibold uppercase tracking-[0.22em] text-clay-dark">
         {ownerName}’s binder
       </p>
-      <h2 className="mt-2 font-serif text-4xl">
+      <h2 className="mt-2 font-serif text-3xl">
         For {person.name}
-        <span className="ml-3 font-sans text-xl font-normal text-ink-soft">· {person.relationship}</span>
+        <span className="ml-3 font-sans text-lg font-normal text-ink-soft">· {person.relationship}</span>
       </h2>
-      <p className="mt-3 text-ink-soft">
+      <p className="mt-2 text-ink-soft">
         {ownerName} would like these to be yours — and wanted you to know why they matter.
       </p>
 
-      <div className="mt-8 space-y-8">
+      <div className="mt-6 space-y-6">
         {items.map((it) => {
           const facts = [
             it.category,
@@ -250,16 +250,16 @@ function PersonSheet({
             it.insured ? 'insured (noted by owner)' : undefined,
           ].filter(Boolean)
           return (
-            <div key={it.id} className="print-avoid-break border-b border-line pb-8 last:border-0 last:pb-0">
+            <div key={it.id} className="print-avoid-break border-b border-line pb-6 last:border-0 last:pb-0">
               <div className="flex gap-5">
-                <div className="relative h-28 w-28 shrink-0 overflow-hidden rounded-2xl bg-cream-deep">
+                <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-2xl bg-cream-deep">
                   <ItemVisual item={it} rounded="rounded-none" eager />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h3 className="font-serif text-2xl">
+                  <h3 className="font-serif text-xl">
                     {it.name}
                     {showValues && bestAmount(it) != null && (
-                      <span className="ml-2 font-sans text-lg font-normal text-ink-soft">
+                      <span className="ml-2 font-sans text-base font-normal text-ink-soft">
                         {money(bestAmount(it))}
                       </span>
                     )}
@@ -268,7 +268,7 @@ function PersonSheet({
                 </div>
               </div>
               {it.story && (
-                <p className="mt-4 font-serif text-lg italic leading-relaxed">“{it.story}”</p>
+                <p className="mt-3 font-serif text-base italic leading-relaxed">“{it.story}”</p>
               )}
               {(it.memories ?? []).length > 0 && (
                 <div className="mt-3 space-y-1.5">
