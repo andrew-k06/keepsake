@@ -26,11 +26,19 @@ type ViewMode = 'tile' | 'list'
 const VIEW_KEY = 'keepsake.recentView'
 
 export function Home() {
-  const { state, itemsInRoom, restoreItem } = useStore()
+  const { state, itemsInRoom, restoreItem, addRoom } = useStore()
   const navigate = useNavigate()
+  const [addingRoom, setAddingRoom] = useState(false)
+  const [roomName, setRoomName] = useState('')
   const [view, setView] = useState<ViewMode>(
     () => (localStorage.getItem(VIEW_KEY) as ViewMode) || 'tile',
   )
+  const saveRoom = () => {
+    if (!roomName.trim()) return
+    addRoom(roomName)
+    setRoomName('')
+    setAddingRoom(false)
+  }
   const setViewMode = (v: ViewMode) => {
     setView(v)
     localStorage.setItem(VIEW_KEY, v)
@@ -81,7 +89,36 @@ export function Home() {
       </div>
 
       {/* Rooms */}
-      <h2 className="mt-12 text-2xl">Rooms</h2>
+      <div className="mt-12 flex items-center justify-between gap-4">
+        <h2 className="text-2xl">Rooms</h2>
+        {!addingRoom && (
+          <button
+            onClick={() => setAddingRoom(true)}
+            className="inline-flex min-h-11 items-center gap-1.5 px-2 py-2 font-semibold text-ink-soft hover:text-ink"
+          >
+            <Plus className="h-4 w-4" strokeWidth={2.25} aria-hidden="true" />
+            Add a room
+          </button>
+        )}
+      </div>
+      {addingRoom && (
+        <Card className="mt-3 flex flex-wrap items-center gap-3 p-4">
+          <input
+            className="min-w-48 flex-1 rounded-2xl border-2 border-line bg-white px-4 py-3 text-lg outline-none focus:border-clay"
+            value={roomName}
+            autoFocus
+            onChange={(e) => setRoomName(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && saveRoom()}
+            placeholder="Kitchen, Study, The Attic…"
+          />
+          <Button variant="ghost" onClick={() => setAddingRoom(false)}>
+            Cancel
+          </Button>
+          <Button onClick={saveRoom} disabled={!roomName.trim()}>
+            Add it
+          </Button>
+        </Card>
+      )}
       <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {state.rooms.map((room) => {
           const count = itemsInRoom(room.id).length

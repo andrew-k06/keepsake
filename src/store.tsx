@@ -4,6 +4,7 @@ import type {
   BinderState,
   ExecutorAccess,
   Item,
+  ItemDocument,
   ItemMemory,
   Person,
   Plan,
@@ -28,6 +29,10 @@ interface StoreApi {
   deleteItem: (id: string) => void
   restoreItem: (id: string) => void
   addMemory: (itemId: string, personId: string, text: string) => void
+  addDocument: (itemId: string, doc: Omit<ItemDocument, 'id'>) => void
+  removeDocument: (itemId: string, docId: string) => void
+  addRoom: (name: string) => string
+  renameRoom: (roomId: string, name: string) => void
   addPerson: (person: Omit<Person, 'id'>) => void
   updatePerson: (id: string, patch: Partial<Person>) => void
   /** Removes a person and clears any item wishes pointing at them. */
@@ -323,6 +328,53 @@ export function StoreProvider({ children }: { children: ReactNode }) {
               ),
             },
             `${person.relationship === 'Me' ? 'You' : person.name} added a memory to “${item.name}”`,
+          )
+        }),
+      addDocument: (itemId, doc) =>
+        set((s) => {
+          const item = s.items.find((it) => it.id === itemId)
+          if (!item) return s
+          return withAudit(
+            {
+              ...s,
+              items: s.items.map((it) =>
+                it.id === itemId
+                  ? { ...it, documents: [...it.documents, { ...doc, id: id('d') }] }
+                  : it,
+              ),
+            },
+            `You attached “${doc.label}” to “${item.name}”`,
+          )
+        }),
+      removeDocument: (itemId, docId) =>
+        set((s) => ({
+          ...s,
+          items: s.items.map((it) =>
+            it.id === itemId
+              ? { ...it, documents: it.documents.filter((d) => d.id !== docId) }
+              : it,
+          ),
+        })),
+      addRoom: (name) => {
+        const newId = id('r')
+        set((s) =>
+          withAudit(
+            { ...s, rooms: [...s.rooms, { id: newId, name: name.trim() }] },
+            `You added the room “${name.trim()}”`,
+          ),
+        )
+        return newId
+      },
+      renameRoom: (roomId, name) =>
+        set((s) => {
+          const room = s.rooms.find((r) => r.id === roomId)
+          if (!room || !name.trim()) return s
+          return withAudit(
+            {
+              ...s,
+              rooms: s.rooms.map((r) => (r.id === roomId ? { ...r, name: name.trim() } : r)),
+            },
+            `You renamed the room “${room.name}” to “${name.trim()}”`,
           )
         }),
       addPerson: (person) =>

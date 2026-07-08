@@ -1,15 +1,22 @@
+import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useStore } from '../store'
-import { Button, Card } from '../components/ui'
+import { Button, Card, inputClass } from '../components/ui'
 import { ItemCard } from '../components/ItemCard'
-import { Plus, ChevronLeft, roomIcon } from '../components/icons'
+import { Plus, ChevronLeft, Pencil, roomIcon } from '../components/icons'
 
 export function Room() {
   const { roomId = '' } = useParams()
-  const { roomById, itemsInRoom } = useStore()
+  const { roomById, itemsInRoom, renameRoom } = useStore()
   const navigate = useNavigate()
   const room = roomById(roomId)
   const items = itemsInRoom(roomId)
+  const [renaming, setRenaming] = useState(false)
+  const [nameDraft, setNameDraft] = useState('')
+  const saveRename = () => {
+    if (nameDraft.trim()) renameRoom(roomId, nameDraft)
+    setRenaming(false)
+  }
 
   if (!room)
     return (
@@ -34,12 +41,41 @@ export function Room() {
         Back to binder
       </Link>
       <div className="mt-3 flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-4xl flex items-center gap-4">
-          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-cream-deep text-clay">
-            <Icon className="h-6 w-6" strokeWidth={1.75} aria-hidden="true" />
-          </span>
-          {room.name}
-        </h1>
+        {renaming ? (
+          <div className="flex flex-wrap items-center gap-3">
+            <input
+              className={inputClass}
+              style={{ width: 'auto' }}
+              value={nameDraft}
+              autoFocus
+              onChange={(e) => setNameDraft(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && saveRename()}
+            />
+            <Button variant="ghost" onClick={() => setRenaming(false)}>
+              Cancel
+            </Button>
+            <Button onClick={saveRename} disabled={!nameDraft.trim()}>
+              Save
+            </Button>
+          </div>
+        ) : (
+          <h1 className="text-4xl flex items-center gap-4">
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-cream-deep text-clay">
+              <Icon className="h-6 w-6" strokeWidth={1.75} aria-hidden="true" />
+            </span>
+            {room.name}
+            <button
+              onClick={() => {
+                setNameDraft(room.name)
+                setRenaming(true)
+              }}
+              aria-label={`Rename ${room.name}`}
+              className="inline-flex min-h-11 items-center px-2 py-2 text-ink-soft hover:text-ink"
+            >
+              <Pencil className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
+            </button>
+          </h1>
+        )}
         <Button
           icon={Plus}
           size="lg"

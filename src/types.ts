@@ -25,6 +25,10 @@ export interface ItemDocument {
   id: string
   type: 'receipt' | 'appraisal' | 'warranty' | 'manual' | 'certificate' | 'photo'
   label: string
+  /** Compressed data URL when the document IS a photo (e.g. the hallmark
+      close-up the identification step asks for). Absent for note-only records
+      ("original receipt — in the gray box"). */
+  src?: string
 }
 
 /** Where a value came from. Precedence when displaying:
