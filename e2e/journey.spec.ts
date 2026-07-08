@@ -67,9 +67,11 @@ test('fresh binder: add, persist, edit details, rooms, search', async ({ page })
   await page.locator('input').first().fill('Blue Vase')
   await page.locator('select').first().selectOption('Antiques')
   await page.getByPlaceholder('1200').fill('300')
-  await page.locator('textarea').fill('From the flea market in 1972.')
+  await page.getByPlaceholder('Where did it come from? What’s its history?').fill('From the flea market in 1972.')
+  await page.getByPlaceholder('Why it matters — a sentence is plenty.').fill('It was the first thing we bought together.')
   await page.getByRole('button', { name: 'Save to my binder' }).click()
   await expect(page.locator('h1')).toHaveText('Blue Vase')
+  await expect(page.getByText('first thing we bought together')).toBeVisible()
 
   // Persistence across reload (IndexedDB)
   await page.reload()
@@ -122,6 +124,30 @@ test('the example binder is recoverable and never clobbers the user’s data', a
   await page.getByRole('button', { name: 'Leave the example' }).click()
   await expect(page.locator('h1')).toHaveText("Harold's Binder")
   await expect(page.getByText('You’re looking at Margaret’s example binder.')).not.toBeVisible()
+
+  expect(errors).toEqual([])
+})
+
+test('sectioned emergency guide + item significance', async ({ page }) => {
+  const errors = errorsOf(page)
+
+  // The guide is sectioned like the family planners made by hand
+  await page.goto('#/emergency')
+  await expect(page.getByRole('heading', { name: 'Final arrangements' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Money & accounts' })).toBeVisible()
+  await expect(page.getByText('never write account numbers')).toBeVisible()
+  // Margaret's cremation wishes live under Final arrangements
+  await expect(page.getByText('Be Thou My Vision')).toBeVisible()
+
+  // A prompt chip pre-fills the section and title
+  await page.getByRole('button', { name: 'Notes for my obituary' }).click()
+  await expect(page.getByLabel('What is it?')).toHaveValue('Notes for my obituary')
+
+  // Significance shows on the item and inside the trend card's meaning context
+  await page.goto('#/binder')
+  await page.getByRole('link', { name: /Engagement Ring/ }).first().click()
+  await expect(page.getByText('What it means')).toBeVisible()
+  await expect(page.getByText('holding her hand').first()).toBeVisible()
 
   expect(errors).toEqual([])
 })

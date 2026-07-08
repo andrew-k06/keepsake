@@ -72,22 +72,40 @@ export const seedState: BinderState = {
       label: 'Where my important papers are',
       detail:
         'The fireproof box in the bedroom closet holds my will, the deed to the house, and the insurance policies. Sarah knows how to open it.',
+      sectionId: 'papers',
     },
     {
       id: 'e-2',
       label: 'My attorney',
       detail: 'James Porter, Porter & Cole — (555) 482-1190. He has the original will.',
+      sectionId: 'papers',
     },
     {
       id: 'e-3',
       label: 'Home — water shut-off',
       detail: 'The main valve is in the garage, back-left corner behind the shelving. Turn it clockwise to close.',
+      sectionId: 'home',
     },
     {
       id: 'e-4',
       label: 'If something happens to me',
       detail:
         'Call Sarah first. My medications and doctor’s information are on the refrigerator. My advance directive is in the fireproof box.',
+      sectionId: 'health',
+    },
+    {
+      id: 'e-5',
+      label: 'Burial or cremation — what I’d like',
+      detail:
+        'Cremation, please, next to Robert at Riverview. Keep it simple — the hymn I love is “Be Thou My Vision,” and I’d rather you all told one funny story than wore black.',
+      sectionId: 'final',
+    },
+    {
+      id: 'e-6',
+      label: 'Where the family photographs live',
+      detail:
+        'The albums are in the cedar chest; the boxes of loose photos are labeled by decade in the garage. Sarah has been scanning them to the family computer.',
+      sectionId: 'memory',
     },
   ],
   items: [
@@ -99,6 +117,8 @@ export const seedState: BinderState = {
       image: imgRing,
       story:
         'This was my mother Eleanor’s ring, given to her in 1948. The center diamond came from her own mother. I want Sarah to have it — she always loved the way it caught the light at Christmas.',
+      significance:
+        'Three generations of us have worn it. When I miss my mother, I put it on — it’s the closest thing I have to holding her hand.',
       valuations: [
         { id: 'v-ring-1', source: 'owner', low: 8500, high: 8500, date: '2026-05-20T00:00:00.000Z' },
       ],
@@ -148,6 +168,8 @@ export const seedState: BinderState = {
       image: imgWatch,
       story:
         'My late husband wore this every day for thirty years, and it still keeps perfect time. David, this one is for you.',
+      significance:
+        'It isn’t the watch — it’s that it never left his wrist. Winding it feels like keeping a small part of him going.',
       valuations: [
         { id: 'v-watch-1', source: 'owner', low: 4200, high: 4200, date: '2026-05-16T00:00:00.000Z' },
       ],

@@ -5,6 +5,7 @@ import { bestAmount } from '../lib/value'
 import { Button } from '../components/ui'
 import { ItemVisual } from '../components/ItemVisual'
 import { BookHeart, Printer, ChevronLeft } from '../components/icons'
+import { EMERGENCY_SECTIONS } from '../lib/emergency'
 import type { Item, Person } from '../types'
 
 /**
@@ -163,12 +164,33 @@ export function PrintBinder() {
             The practical things {state.ownerName} wanted you to know — so you always know what to do.
           </p>
           <div className="mt-6 space-y-6">
-            {state.emergency.map((e) => (
-              <div key={e.id} className="print-avoid-break">
-                <h3 className="font-serif text-xl">{e.label}</h3>
-                <p className="mt-1 leading-relaxed text-ink-soft">{e.detail}</p>
-              </div>
-            ))}
+            {EMERGENCY_SECTIONS.map((sec) => {
+              const notes = state.emergency.filter((e) => e.sectionId === sec.id)
+              if (notes.length === 0) return null
+              return (
+                <div key={sec.id} className="print-avoid-break">
+                  <p className="text-sm font-semibold uppercase tracking-[0.14em] text-ink-soft">
+                    {sec.title}
+                  </p>
+                  <div className="mt-2 space-y-4">
+                    {notes.map((e) => (
+                      <div key={e.id}>
+                        <h3 className="font-serif text-xl">{e.label}</h3>
+                        <p className="mt-1 leading-relaxed text-ink-soft">{e.detail}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )
+            })}
+            {state.emergency
+              .filter((e) => !EMERGENCY_SECTIONS.some((sec) => sec.id === e.sectionId))
+              .map((e) => (
+                <div key={e.id} className="print-avoid-break">
+                  <h3 className="font-serif text-xl">{e.label}</h3>
+                  <p className="mt-1 leading-relaxed text-ink-soft">{e.detail}</p>
+                </div>
+              ))}
           </div>
         </section>
       )}
@@ -271,6 +293,12 @@ function PersonSheet({
               </div>
               {it.story && (
                 <p className="mt-3 font-serif text-base italic leading-relaxed">“{it.story}”</p>
+              )}
+              {it.significance && (
+                <p className="mt-2 text-sm leading-relaxed text-ink-soft">
+                  <span className="font-semibold text-ink">What it means to {ownerName}:</span>{' '}
+                  {it.significance}
+                </p>
               )}
               {(it.memories ?? []).length > 0 && (
                 <div className="mt-3 space-y-1.5">

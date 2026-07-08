@@ -49,6 +49,11 @@ export function TrendCard({ item, familyPlan }: { item: Item; familyPlan: boolea
       </p>
       <p className="mt-2 text-ink-soft">{snap.context}</p>
       {snap.meaning && <p className="mt-2 text-ink-soft">{snap.meaning}</p>}
+      {item.significance && (
+        <p className="mt-2 font-serif italic text-ink">
+          In your own words: “{item.significance}”
+        </p>
+      )}
 
       <div className="mt-4 rounded-2xl bg-cream p-4">
         <p className="text-sm font-semibold uppercase tracking-wide text-ink-soft">Recent sales</p>

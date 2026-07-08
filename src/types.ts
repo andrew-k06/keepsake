@@ -68,7 +68,11 @@ export interface Item {
   /** Reference into the photo store — the normal home for user photos, kept
       OUT of the binder blob so saves stay light. Resolved via usePhoto(). */
   photoId?: string
-  story: string // the provenance / "why it matters" narrative
+  story: string // the provenance narrative — where it came from, its history
+  /** The emotional layer, distinct from provenance: what this means to the
+      owner. Travels with valuations and appraisals so market price never
+      stands alone, and prints in the family binder. */
+  significance?: string
   acquired?: string
   serial?: string
   condition?: string
@@ -96,6 +100,9 @@ export interface EmergencyEntry {
   id: string
   label: string
   detail: string
+  /** Which chapter of the guide this belongs to (lib/emergency.ts sections).
+      Absent on older notes — they display under "Other notes". */
+  sectionId?: string
 }
 
 /** One line in the binder's activity record. Backs the privacy promise

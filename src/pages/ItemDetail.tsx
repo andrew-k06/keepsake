@@ -56,6 +56,8 @@ export function ItemDetail() {
 
   const [editingStory, setEditingStory] = useState(false)
   const [storyDraft, setStoryDraft] = useState('')
+  const [editingMeaning, setEditingMeaning] = useState(false)
+  const [meaningDraft, setMeaningDraft] = useState('')
   const [showInsuranceInfo, setShowInsuranceInfo] = useState(false)
   const [showAppraisalPlan, setShowAppraisalPlan] = useState(false)
   const [addingMemory, setAddingMemory] = useState(false)
@@ -108,6 +110,15 @@ export function ItemDetail() {
   const saveStory = () => {
     updateItem(item.id, { story: storyDraft })
     setEditingStory(false)
+  }
+
+  const beginEditMeaning = () => {
+    setMeaningDraft(item.significance ?? '')
+    setEditingMeaning(true)
+  }
+  const saveMeaning = () => {
+    updateItem(item.id, { significance: meaningDraft.trim() || undefined })
+    setEditingMeaning(false)
   }
 
   const beginEdit = () => {
@@ -365,6 +376,53 @@ export function ItemDetail() {
                 whenever you’re ready.
               </p>
             )}
+
+            {/* The emotional layer — distinct from provenance. It rides along
+                with values and appraisals so market price never stands alone. */}
+            <div className="relative mt-5 border-t border-line pt-4">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-sage-deep">
+                  <HeartHandshake className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden="true" />
+                  What it means
+                </div>
+                {!editingMeaning && (
+                  <button
+                    onClick={beginEditMeaning}
+                    className="relative inline-flex min-h-11 items-center gap-1.5 px-2 py-2 text-sm font-semibold text-ink-soft hover:text-ink"
+                  >
+                    <Pencil className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
+                    {item.significance ? 'Change it' : 'Say it'}
+                  </button>
+                )}
+              </div>
+              {editingMeaning ? (
+                <div className="relative mt-2">
+                  <VoiceCapture
+                    onText={(text) => setMeaningDraft((m) => (m ? `${m.trim()} ${text}` : text))}
+                  />
+                  <textarea
+                    className={`${inputClass} mt-3 min-h-24`}
+                    value={meaningDraft}
+                    onChange={(e) => setMeaningDraft(e.target.value)}
+                    placeholder="What does it mean to you? Why does it matter?"
+                    autoFocus
+                  />
+                  <div className="mt-3 flex justify-end gap-3">
+                    <Button variant="ghost" onClick={() => setEditingMeaning(false)}>
+                      Cancel
+                    </Button>
+                    <Button onClick={saveMeaning}>Save</Button>
+                  </div>
+                </div>
+              ) : item.significance ? (
+                <p className="relative mt-2 leading-relaxed text-ink">{item.significance}</p>
+              ) : (
+                <p className="relative mt-2 text-sm text-ink-soft">
+                  The story says where it came from — this says why it matters. A sentence is plenty,
+                  and it travels with every appraisal and printed page.
+                </p>
+              )}
+            </div>
           </Card>
 
           {/* Family memories — the heirs' side of the story, added while

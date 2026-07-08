@@ -156,6 +156,11 @@ export function Summary() {
                     ) : (
                       <p className="text-ink-soft mt-1">No story recorded yet.</p>
                     )}
+                    {it.significance && (
+                      <p className="mt-1 text-sm text-ink-soft">
+                        <span className="font-semibold">What it means:</span> {it.significance}
+                      </p>
+                    )}
                   </div>
                 </Card>
               ))}

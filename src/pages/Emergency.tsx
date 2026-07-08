@@ -1,35 +1,36 @@
 import { useState } from 'react'
 import { useStore } from '../store'
+import { EMERGENCY_SECTIONS, sectionById } from '../lib/emergency'
 import { Button, Card, Field, inputClass } from '../components/ui'
 import { GuideReturnPill } from '../components/GuideReturnPill'
 import { useConfirm } from '../components/Confirm'
 import { LifeBuoy, ScrollText, Heart, Plus, Pencil, Trash2 } from '../components/icons'
+import type { EmergencyEntry } from '../types'
 
-// Guided prompts — the questions families actually need answered. Tapping one
-// starts a note instead of leaving the user staring at a blank form.
-const PROMPTS = [
-  'Where my important papers are',
-  'My attorney',
-  'Who to call first',
-  'My doctor & medications',
-  'Home — water and power shut-offs',
-  'Bills that need paying',
-]
-
+/**
+ * "In an emergency" — sectioned like the planners families make by hand:
+ * health & care, final arrangements, papers, money, secured places, the
+ * house, and where the photographs live. Each section carries the questions
+ * a family actually asks, and its own safety rule where one applies
+ * (locations in words — never codes, numbers, or passwords).
+ */
 export function Emergency() {
   const { state, addEmergency, updateEmergency, deleteEmergency } = useStore()
+  const confirm = useConfirm()
   const [adding, setAdding] = useState(false)
+  const [sectionId, setSectionId] = useState<string>(EMERGENCY_SECTIONS[0].id)
   const [label, setLabel] = useState('')
   const [labelError, setLabelError] = useState('')
   const [detail, setDetail] = useState('')
-  const confirm = useConfirm()
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editDetail, setEditDetail] = useState('')
 
-  const startFromPrompt = (p: string) => {
+  const startFromPrompt = (secId: string, p: string) => {
+    setSectionId(secId)
     setLabel(p)
     setLabelError('')
     setAdding(true)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const save = () => {
@@ -37,7 +38,7 @@ export function Emergency() {
       setLabelError('Please give the note a short title so your family can find it.')
       return
     }
-    addEmergency({ label: label.trim(), detail })
+    addEmergency({ label: label.trim(), detail, sectionId })
     setLabel('')
     setDetail('')
     setAdding(false)
@@ -63,6 +64,56 @@ export function Emergency() {
       deleteEmergency(id)
   }
 
+  const activeSection = sectionById(sectionId)
+  const orphans = state.emergency.filter((e) => !sectionById(e.sectionId))
+
+  const NoteCard = ({ e }: { e: EmergencyEntry }) => (
+    <div className="flex gap-4 border-t border-line pt-4 first:border-0 first:pt-0">
+      <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-cream-deep text-clay">
+        <ScrollText className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
+      </span>
+      <div className="min-w-0 flex-1">
+        <h3 className="text-xl">{e.label}</h3>
+        {editingId === e.id ? (
+          <div className="mt-2">
+            <textarea
+              className={`${inputClass} min-h-24`}
+              value={editDetail}
+              onChange={(ev) => setEditDetail(ev.target.value)}
+              autoFocus
+            />
+            <div className="mt-3 flex justify-end gap-3">
+              <Button variant="ghost" onClick={() => setEditingId(null)}>
+                Cancel
+              </Button>
+              <Button onClick={saveEdit}>Save</Button>
+            </div>
+          </div>
+        ) : (
+          <p className="text-ink-soft mt-1 leading-relaxed">{e.detail}</p>
+        )}
+      </div>
+      {editingId !== e.id && (
+        <div className="flex shrink-0 flex-col items-end gap-1">
+          <button
+            onClick={() => beginEdit(e.id, e.detail)}
+            className="inline-flex min-h-11 items-center gap-1 px-2 py-2 text-sm font-semibold text-ink-soft hover:text-ink"
+          >
+            <Pencil className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
+            Edit
+          </button>
+          <button
+            onClick={() => void remove(e.id, e.label)}
+            className="inline-flex min-h-11 items-center gap-1 px-2 py-2 text-sm font-semibold text-ink-soft hover:text-clay-dark"
+          >
+            <Trash2 className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
+            Delete
+          </button>
+        </div>
+      )}
+    </div>
+  )
+
   return (
     <div>
       <GuideReturnPill />
@@ -83,32 +134,21 @@ export function Emergency() {
         </Button>
       </div>
 
-      {/* Guided prompts for notes not yet written */}
-      {(() => {
-        const existing = new Set(state.emergency.map((e) => e.label.toLowerCase()))
-        const remaining = PROMPTS.filter((p) => !existing.has(p.toLowerCase()))
-        if (remaining.length === 0) return null
-        return (
-          <div className="mt-6">
-            <p className="font-semibold">Questions your family will ask:</p>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {remaining.map((p) => (
-                <button
-                  key={p}
-                  onClick={() => startFromPrompt(p)}
-                  className="inline-flex min-h-11 items-center gap-1.5 rounded-full border-2 border-line bg-white px-4 py-2 font-semibold text-ink-soft transition hover:border-clay hover:text-ink"
-                >
-                  <Plus className="h-4 w-4" strokeWidth={2.25} aria-hidden="true" />
-                  {p}
-                </button>
-              ))}
-            </div>
-          </div>
-        )
-      })()}
-
       {adding && (
         <Card className="mt-6 p-6">
+          <Field label="Which part of the guide?">
+            <select
+              className={inputClass}
+              value={sectionId}
+              onChange={(e) => setSectionId(e.target.value)}
+            >
+              {EMERGENCY_SECTIONS.map((sec) => (
+                <option key={sec.id} value={sec.id}>
+                  {sec.title}
+                </option>
+              ))}
+            </select>
+          </Field>
           <Field label="What is it?" error={labelError}>
             <input
               className={inputClass}
@@ -122,7 +162,10 @@ export function Emergency() {
           </Field>
           <Field
             label="Details"
-            hint="A tip for safety: say where things are in words your family understands — there’s no need to write down key locations or codes."
+            hint={
+              activeSection?.safety ??
+              'Say where things are in words your family understands — there’s no need to write down key locations or codes.'
+            }
           >
             <textarea className={`${inputClass} min-h-28`} value={detail} onChange={(e) => setDetail(e.target.value)} />
           </Field>
@@ -135,53 +178,52 @@ export function Emergency() {
         </Card>
       )}
 
-      <div className="mt-6 space-y-4">
-        {state.emergency.map((e) => (
-          <Card key={e.id} className="p-5 flex gap-4">
-            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-cream-deep text-clay">
-              <ScrollText className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
-            </span>
-            <div className="min-w-0 flex-1">
-              <h3 className="text-xl">{e.label}</h3>
-              {editingId === e.id ? (
-                <div className="mt-2">
-                  <textarea
-                    className={`${inputClass} min-h-24`}
-                    value={editDetail}
-                    onChange={(ev) => setEditDetail(ev.target.value)}
-                    autoFocus
-                  />
-                  <div className="mt-3 flex justify-end gap-3">
-                    <Button variant="ghost" onClick={() => setEditingId(null)}>
-                      Cancel
-                    </Button>
-                    <Button onClick={saveEdit}>Save</Button>
-                  </div>
+      {/* The guide, chapter by chapter */}
+      <div className="mt-8 space-y-6">
+        {EMERGENCY_SECTIONS.map((sec) => {
+          const notes = state.emergency.filter((e) => e.sectionId === sec.id)
+          const existing = new Set(notes.map((e) => e.label.toLowerCase()))
+          const remaining = sec.prompts.filter((p) => !existing.has(p.toLowerCase()))
+          return (
+            <Card key={sec.id} className="p-6">
+              <h2 className="text-2xl">{sec.title}</h2>
+              <p className="mt-1 text-sm text-ink-soft">{sec.sub}</p>
+              {notes.length > 0 && (
+                <div className="mt-4 space-y-4">
+                  {notes.map((e) => (
+                    <NoteCard key={e.id} e={e} />
+                  ))}
                 </div>
-              ) : (
-                <p className="text-ink-soft mt-1 leading-relaxed">{e.detail}</p>
               )}
+              {remaining.length > 0 && (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {remaining.map((p) => (
+                    <button
+                      key={p}
+                      onClick={() => startFromPrompt(sec.id, p)}
+                      className="inline-flex min-h-11 items-center gap-1.5 rounded-full border-2 border-line bg-white px-4 py-2 font-semibold text-ink-soft transition hover:border-clay hover:text-ink"
+                    >
+                      <Plus className="h-4 w-4" strokeWidth={2.25} aria-hidden="true" />
+                      {p}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {sec.safety && <p className="mt-3 text-sm text-ink-soft">Safety note: {sec.safety}</p>}
+            </Card>
+          )
+        })}
+
+        {orphans.length > 0 && (
+          <Card className="p-6">
+            <h2 className="text-2xl">Other notes</h2>
+            <div className="mt-4 space-y-4">
+              {orphans.map((e) => (
+                <NoteCard key={e.id} e={e} />
+              ))}
             </div>
-            {editingId !== e.id && (
-              <div className="flex shrink-0 flex-col items-end gap-1">
-                <button
-                  onClick={() => beginEdit(e.id, e.detail)}
-                  className="inline-flex min-h-11 items-center gap-1 px-2 py-2 text-sm font-semibold text-ink-soft hover:text-ink"
-                >
-                  <Pencil className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
-                  Edit
-                </button>
-                <button
-                  onClick={() => void remove(e.id, e.label)}
-                  className="inline-flex min-h-11 items-center gap-1 px-2 py-2 text-sm font-semibold text-ink-soft hover:text-clay-dark"
-                >
-                  <Trash2 className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
-                  Delete
-                </button>
-              </div>
-            )}
           </Card>
-        ))}
+        )}
       </div>
 
       <Card className="mt-8 p-6 bg-clay/5 flex items-start gap-4">
@@ -190,9 +232,10 @@ export function Emergency() {
         </span>
         <p className="text-ink-soft leading-relaxed">
           <span className="font-semibold text-ink">A note on peace of mind.</span> This section isn’t a
-          legal will — it’s the warm, practical guide your loved ones will be grateful for. You decide
-          who can see it: your trusted contact can be given access through a careful, verified process,
-          and never a day sooner than you choose.
+          legal will — it’s the warm, practical guide your loved ones will be grateful for. Documents
+          like directives and powers of attorney belong with the professionals who made them; here you
+          record where they live and who to ask. You decide who can see it: your trusted contact can be
+          given access through a careful, verified process, and never a day sooner than you choose.
         </p>
       </Card>
     </div>

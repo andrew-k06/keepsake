@@ -308,6 +308,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           if ('story' in patch && patch.story !== item.story) {
             next = withAudit(next, `You updated the story of “${item.name}”`)
           }
+          if ('significance' in patch && patch.significance !== item.significance) {
+            next = withAudit(next, `You wrote what “${item.name}” means to you`)
+          }
           return next
         }),
       deleteItem: (itemId) =>

@@ -41,6 +41,7 @@ export function AddItem() {
   const [estValue, setEstValue] = useState<string>('')
   const [roomId, setRoomId] = useState(presetRoom ?? state.rooms[0]?.id ?? '')
   const [story, setStory] = useState('')
+  const [significance, setSignificance] = useState('')
   const [beneficiaryId, setBeneficiaryId] = useState('')
 
   const confirm = useConfirm()
@@ -138,6 +139,7 @@ export function AddItem() {
       roomId,
       photo,
       story,
+      significance: significance.trim() || undefined,
       valuations,
       beneficiaryId: beneficiaryId || undefined,
       appraisalStatus,
@@ -350,10 +352,22 @@ export function AddItem() {
                 className={`${inputClass} min-h-28`}
                 value={story}
                 onChange={(e) => setStory(e.target.value)}
-                placeholder="Where did it come from? Why does it matter? Who should know about it?"
+                placeholder="Where did it come from? What’s its history?"
               />
             </label>
           </div>
+
+          <Field
+            label="What does it mean to you? (optional)"
+            hint="The emotional part — it travels with every appraisal and printed page, so market price never stands alone."
+          >
+            <textarea
+              className={`${inputClass} min-h-20`}
+              value={significance}
+              onChange={(e) => setSignificance(e.target.value)}
+              placeholder="Why it matters — a sentence is plenty."
+            />
+          </Field>
 
           <Field label="Who would you like this to go to? (optional)" hint="A wish you can change anytime — not a legal document.">
             <select
