@@ -4,6 +4,7 @@ import { useStore, money } from '../store'
 import { bestAmount } from '../lib/value'
 import { Button, Card, Avatar } from '../components/ui'
 import { ItemVisual } from '../components/ItemVisual'
+import { GuideReturnPill } from '../components/GuideReturnPill'
 import { Printer, Mail, Heart, ScrollText, FileText } from '../components/icons'
 
 export function Summary() {
@@ -37,6 +38,9 @@ export function Summary() {
 
   return (
     <div>
+      <span className="print-hidden">
+        <GuideReturnPill />
+      </span>
       {/* Print-only letterhead */}
       <div className="print-only mb-6 border-b-2 border-ink pb-4">
         <p className="font-serif text-3xl">{state.binderName}</p>

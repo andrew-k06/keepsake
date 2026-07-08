@@ -47,6 +47,8 @@ interface StoreApi {
   startPath: () => void
   completeStep: (stepId: string) => void
   skipStep: (stepId: string) => void
+  /** Mark the step the user just left the Guide to do (persists over reload). */
+  setActiveStep: (stepId?: string) => void
   setTogether: (personId?: string) => void
   markCelebrated: (stepId: string) => void
   /** Record an activity line (prints, exports, checks) in the binder's history. */
@@ -461,7 +463,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         }),
       startPath: () =>
         set((s) => {
-          if (s.preparedness?.startedAt) return { ...s, preparedness: { ...s.preparedness, lastVisitAt: new Date().toISOString() } }
+          if (s.preparedness?.startedAt)
+            return {
+              ...s,
+              preparedness: {
+                ...s.preparedness,
+                lastVisitAt: new Date().toISOString(),
+                // Back on the Guide: the out-doing-a-step marker is done its job.
+                activeStepId: undefined,
+              },
+            }
           const prep = emptyPreparedness()
           // Credit life: steps the binder already satisfies don't fire a
           // celebration barrage on the first visit.
@@ -483,6 +494,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
                 ...prep,
                 lastStepId: stepId,
                 lastVisitAt: new Date().toISOString(),
+                activeStepId: prep.activeStepId === stepId ? undefined : prep.activeStepId,
                 steps: {
                   ...prep.steps,
                   [stepId]: { status: 'done', at: new Date().toISOString(), together: Boolean(together) },
@@ -507,6 +519,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             },
           }
         }),
+      setActiveStep: (stepId) =>
+        set((s) => ({ ...s, preparedness: { ...ensurePrep(s), activeStepId: stepId } })),
       setTogether: (personId) =>
         set((s) => {
           const prep = ensurePrep(s)

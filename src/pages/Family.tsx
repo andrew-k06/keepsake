@@ -34,7 +34,7 @@ export function Family() {
   const [relationship, setRelationship] = useState('')
   const [email, setEmail] = useState('')
   const [emailError, setEmailError] = useState('')
-  const [role, setRole] = useState<'collaborator' | 'viewer' | 'executor'>('viewer')
+  const [role, setRole] = useState<'collaborator' | 'viewer'>('viewer')
 
   const colors = ['#4a7c6a', '#d99a3f', '#c2603d', '#6b6157', '#356152']
 
@@ -125,7 +125,6 @@ export function Family() {
               <select className={inputClass} value={role} onChange={(e) => setRole(e.target.value as typeof role)}>
                 <option value="viewer">View only</option>
                 <option value="collaborator">Help me add & edit</option>
-                <option value="executor">Trusted contact (emergency access)</option>
               </select>
             </Field>
           </div>
@@ -169,7 +168,6 @@ export function Family() {
                   >
                     <option value="viewer">Can view</option>
                     <option value="collaborator">Can help add & edit</option>
-                    <option value="executor">Trusted contact</option>
                   </select>
                   <button
                     onClick={() => remove(p)}

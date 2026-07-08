@@ -43,6 +43,7 @@ export function migrate(raw: unknown): BinderState | null {
       lastVisitAt: typeof p.lastVisitAt === 'string' ? p.lastVisitAt : undefined,
       lastStepId: typeof p.lastStepId === 'string' ? p.lastStepId : undefined,
       togetherWithId: typeof p.togetherWithId === 'string' ? p.togetherWithId : undefined,
+      activeStepId: typeof p.activeStepId === 'string' ? p.activeStepId : undefined,
       steps: (p.steps && typeof p.steps === 'object' ? p.steps : {}) as NonNullable<
         BinderState['preparedness']
       >['steps'],
@@ -58,7 +59,9 @@ export function migrate(raw: unknown): BinderState | null {
     rooms: s.rooms as BinderState['rooms'],
     items,
     trash,
-    people: (s.people as BinderState['people']) ?? [],
+    people: ((s.people as BinderState['people']) ?? []).map((p2) =>
+      p2.role === 'executor' ? { ...p2, role: 'viewer' as const } : p2,
+    ),
     emergency: (s.emergency as BinderState['emergency']) ?? [],
     audit: Array.isArray(s.audit) ? (s.audit as BinderState['audit']) : [],
     executorAccess: s.executorAccess as BinderState['executorAccess'],

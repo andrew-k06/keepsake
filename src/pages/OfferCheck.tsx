@@ -3,6 +3,7 @@ import { useStore, money } from '../store'
 import { marketSnapshot } from '../lib/market'
 import { Button, Card, DemoTag, Field, inputClass } from '../components/ui'
 import { ItemVisual } from '../components/ItemVisual'
+import { GuideReturnPill } from '../components/GuideReturnPill'
 import { Shield, Mail, Quote } from '../components/icons'
 import { CATEGORIES } from '../types'
 import type { Item } from '../types'
@@ -98,6 +99,7 @@ export function OfferCheck() {
 
   return (
     <div className="mx-auto max-w-2xl">
+      <GuideReturnPill />
       <div className="flex items-center gap-3">
         <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-sage/15 text-sage-deep">
           <Shield className="h-6 w-6" strokeWidth={2} aria-hidden="true" />

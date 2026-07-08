@@ -19,14 +19,17 @@ export function NextStepCard({
   togetherName?: string
 }) {
   const navigate = useNavigate()
-  const { startPath, completeStep, skipStep } = useStore()
+  const { startPath, completeStep, skipStep, setActiveStep } = useStore()
 
   const go = () => {
     startPath()
     if (step.selfAttested) {
       completeStep(step.id)
     } else {
-      navigate(step.route, { state: { fromGuide: step.id } })
+      // Persisted (not router state): the return pill survives reloads and
+      // multi-page hops until the user comes back to the Guide.
+      setActiveStep(step.id)
+      navigate(step.route)
     }
   }
 

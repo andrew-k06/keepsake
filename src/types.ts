@@ -132,6 +132,9 @@ export interface PreparednessState {
   lastStepId?: string
   /** Person helping during a sit-together session. */
   togetherWithId?: string
+  /** Step the user is currently out doing (set when they leave the Guide via
+      "Let's do it") — survives reload, unlike router state. */
+  activeStepId?: string
   steps: Record<string, { status: 'done' | 'skipped'; at: string; together?: boolean }>
   /** Step ids whose one-time celebration has already shown. */
   celebrated: string[]

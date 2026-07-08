@@ -7,6 +7,7 @@ import { Button, Card, AppraisalBadge } from '../components/ui'
 import { ItemCard } from '../components/ItemCard'
 import { ItemVisual } from '../components/ItemVisual'
 import { NextStepCard } from '../components/NextStepCard'
+import { GuideReturnPill } from '../components/GuideReturnPill'
 import type { Item } from '../types'
 import {
   Plus,
@@ -33,6 +34,14 @@ export function Home() {
   const [view, setView] = useState<ViewMode>(
     () => (localStorage.getItem(VIEW_KEY) as ViewMode) || 'tile',
   )
+  const [query, setQuery] = useState('')
+  const [showAll, setShowAll] = useState(false)
+  const q = query.trim().toLowerCase()
+  const matches = q
+    ? state.items.filter((it) =>
+        `${it.name} ${it.category} ${it.story}`.toLowerCase().includes(q),
+      )
+    : []
   const saveRoom = () => {
     if (!roomName.trim()) return
     addRoom(roomName)
@@ -51,6 +60,7 @@ export function Home() {
 
   return (
     <div>
+      <GuideReturnPill />
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-ink-soft text-lg">Welcome back, {state.ownerName}</p>
@@ -148,6 +158,43 @@ export function Home() {
         })}
       </div>
 
+      {/* Find anything — search across every item; no memory of rooms needed */}
+      {state.items.length > 0 && (
+        <div className="mt-12">
+          <h2 className="text-2xl">Find something</h2>
+          <input
+            className="mt-3 w-full rounded-2xl border-2 border-line bg-white px-4 py-3 text-lg outline-none focus:border-clay"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search by name, category, or a word from its story…"
+          />
+          {query.trim() ? (
+            matches.length === 0 ? (
+              <p className="mt-3 text-ink-soft">Nothing matches “{query.trim()}” yet.</p>
+            ) : (
+              <div className="mt-3 flex flex-col gap-3">
+                {matches.map((it) => (
+                  <ItemRow key={it.id} item={it} />
+                ))}
+              </div>
+            )
+          ) : showAll ? (
+            <div className="mt-3 flex flex-col gap-3">
+              {state.items.map((it) => (
+                <ItemRow key={it.id} item={it} />
+              ))}
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowAll(true)}
+              className="mt-3 inline-flex min-h-11 items-center px-2 py-2 font-semibold text-clay-dark underline hover:text-ink"
+            >
+              Show all {state.items.length} items
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Recently added */}
       <div className="mt-12 flex items-center justify-between gap-4">
         <h2 className="text-2xl">Recently added</h2>
@@ -182,21 +229,31 @@ export function Home() {
         </div>
       )}
 
-      {/* Getting Ready — the one next step (replaces the old generic nudge:
-          the invite is now a real step with context and sequencing) */}
+      {/* Getting Ready — the one next step. This card is the mobile door to
+          the Guide, so it persists even after the core path completes (the
+          ongoing chapter, celebrations, and Together mode still live there). */}
       {(() => {
         const progress = prepareProgress(state)
-        if (progress.coreDone || !progress.nextStep) return null
+        if (progress.nextStep) {
+          return (
+            <div className="mt-12">
+              <NextStepCard step={progress.nextStep} compact />
+              <Link
+                to="/guide"
+                className="mt-2 inline-flex min-h-11 items-center gap-1 py-1 text-sm font-semibold text-sage-deep underline hover:text-ink"
+              >
+                See the whole path
+              </Link>
+            </div>
+          )
+        }
         return (
-          <div className="mt-12">
-            <NextStepCard step={progress.nextStep} compact />
-            <Link
-              to="/guide"
-              className="mt-2 inline-flex min-h-11 items-center gap-1 py-1 text-sm font-semibold text-sage-deep underline hover:text-ink"
-            >
-              See the whole path
-            </Link>
-          </div>
+          <Link
+            to="/guide"
+            className="mt-12 inline-flex min-h-11 items-center gap-2 rounded-full border-2 border-sage/40 bg-sage/10 px-4 py-2 font-semibold text-sage-deep hover:border-sage"
+          >
+            Getting Ready — complete. Open your path anytime.
+          </Link>
         )
       })()}
 

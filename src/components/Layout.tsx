@@ -107,9 +107,26 @@ export function Layout({ children }: { children: ReactNode }) {
             </button>
           </div>
         )}
-        {/* Mobile top bar */}
+        {/* Mobile top bar — quick doors to the Guide and Plan (neither fits
+            the six-item bottom nav; a monetization page must not be
+            desktop-only) */}
         <header className="md:hidden flex items-center justify-between border-b border-line bg-white/80 backdrop-blur-sm px-5 py-4">
           <Brand small />
+          <div className="flex items-center gap-2">
+            <NavLink
+              to="/guide"
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold text-sage-deep"
+            >
+              <Compass className="h-5 w-5 shrink-0" strokeWidth={2} aria-hidden="true" />
+              Path
+            </NavLink>
+            <NavLink
+              to="/plan"
+              className="inline-flex min-h-11 items-center rounded-xl px-3 py-2 text-sm font-semibold text-clay-dark"
+            >
+              {state.plan.tier === 'starter' ? 'Free plan' : 'Plan'}
+            </NavLink>
+          </div>
         </header>
 
         <main className="mx-auto max-w-4xl px-5 py-8 pb-28 md:pb-12">{children}</main>
