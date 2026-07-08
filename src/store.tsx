@@ -76,8 +76,8 @@ interface StoreApi {
 
 const StoreContext = createContext<StoreApi | null>(null)
 
-/** Drop trashed items older than the restore window. */
-function purgeTrash(state: BinderState): BinderState {
+/** Drop trashed items older than the restore window. Exported for tests. */
+export function purgeTrash(state: BinderState): BinderState {
   const cutoff = Date.now() - TRASH_DAYS * 24 * 60 * 60 * 1000
   const trash = (state.trash ?? []).filter(
     (it) => it.deletedAt && new Date(it.deletedAt).getTime() > cutoff,
@@ -133,7 +133,7 @@ export function emptyBinder(ownerName: string, opts: { giftFrom?: string } = {})
 /** Lazily create the preparedness slice OUTSIDE of startPath. Pre-credits
     everything the binder already satisfies so a later first visit to the
     Guide never fires a celebration barrage for work life already did. */
-function ensurePrep(s: BinderState) {
+export function ensurePrep(s: BinderState) {
   if (s.preparedness) return s.preparedness
   const prep = emptyPreparedness()
   prep.celebrated = STEPS.filter((st) => stepDone(s, st)).map((st) => st.id)
