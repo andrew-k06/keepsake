@@ -1,7 +1,13 @@
 import type { BinderState } from '../types'
+import imgRing from '../assets/seed/ring.jpg'
+import imgPainting from '../assets/seed/painting.jpg'
+import imgWatch from '../assets/seed/watch.jpg'
+import imgChina from '../assets/seed/china.jpg'
+import imgClock from '../assets/seed/clock.jpg'
+import imgCoins from '../assets/seed/coins.jpg'
 
 // Seed binder — a realistic, warm sample so the app feels alive in a live demo.
-// Item images are reliably-hosted Unsplash CDN photos (verified HTTP 200, image/jpeg).
+// Item images are bundled locally so demos (and the printed binder) work offline.
 export const seedState: BinderState = {
   isDemo: true,
   ownerName: 'Margaret',
@@ -90,7 +96,7 @@ export const seedState: BinderState = {
       name: "Grandmother's Engagement Ring",
       category: 'Jewelry',
       roomId: 'safe',
-      image: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=800&q=70',
+      image: imgRing,
       story:
         'This was my mother Eleanor’s ring, given to her in 1948. The center diamond came from her own mother. I want Sarah to have it — she always loved the way it caught the light at Christmas.',
       valuations: [
@@ -109,7 +115,7 @@ export const seedState: BinderState = {
       name: 'Coastal Landscape (oil)',
       category: 'Art',
       roomId: 'living',
-      image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=70',
+      image: imgPainting,
       story:
         'Bought at a gallery in Maine on our 25th anniversary trip. Robert haggled the artist down a little, and we laughed about it the whole drive home.',
       valuations: [
@@ -139,7 +145,7 @@ export const seedState: BinderState = {
       name: 'Robert’s Omega Watch',
       category: 'Watches',
       roomId: 'safe',
-      image: 'https://images.unsplash.com/photo-1547996160-81dfa63595aa?auto=format&fit=crop&w=800&q=70',
+      image: imgWatch,
       story:
         'My late husband wore this every day for thirty years, and it still keeps perfect time. David, this one is for you.',
       valuations: [
@@ -166,7 +172,7 @@ export const seedState: BinderState = {
       name: 'Wedgwood China Set (service for 12)',
       category: 'China & Silver',
       roomId: 'living',
-      image: 'https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?auto=format&fit=crop&w=800&q=70',
+      image: imgChina,
       story:
         'Our wedding china. Every Thanksgiving for forty years was served on these plates. There are eleven dinner plates now — one broke in 1974 and we never replaced it, on purpose.',
       valuations: [
@@ -184,7 +190,7 @@ export const seedState: BinderState = {
       name: 'Grandfather Clock',
       category: 'Furniture',
       roomId: 'living',
-      image: 'https://images.unsplash.com/photo-1563861826100-9cb868fdbe1c?auto=format&fit=crop&w=800&q=70',
+      image: imgClock,
       story:
         'Built by Robert’s grandfather, a clockmaker in Vermont. Wind it once a week with the brass key kept in the bottom drawer. It chimes a little early — that’s its character.',
       valuations: [
@@ -211,7 +217,7 @@ export const seedState: BinderState = {
       name: 'Silver Dollar Collection',
       category: 'Coins',
       roomId: 'safe',
-      image: 'https://images.unsplash.com/photo-1574607383476-f517f260d30b?auto=format&fit=crop&w=800&q=70',
+      image: imgCoins,
       story:
         'Robert started this collection with his father. Forty-two Morgan and Peace dollars sit in the blue folder. He always said the 1921 was the special one.',
       valuations: [

@@ -51,6 +51,11 @@ interface StoreApi {
   /** True when another tab/window wrote the binder — reload to see it. */
   otherTabWrote: boolean
   resetDemo: () => void
+  /** Open Margaret's example binder (its own storage slot — the user's
+      binder is untouched and always recoverable). Loads pristine seed. */
+  viewExample: () => void
+  /** Leave the example. Resolves false when no user binder exists yet. */
+  exitExample: () => Promise<boolean>
   /** Start a brand-new, empty binder (optionally set up as a gift). */
   startFresh: (ownerName: string, opts?: { giftFrom?: string }) => void
   // selectors
@@ -147,16 +152,32 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     void navigator.storage?.persist?.().catch(() => {})
   }, [])
 
-  // Async boot: load from the repository; seed the demo binder on first run.
+  // Which storage slot the current state persists to. The example binder
+  // lives in its own slot so it can never clobber the user's data.
+  const activeSlot = useRef<'main' | 'demo'>('main')
+
+  // Async boot: the user's binder if one exists; otherwise the example.
   useEffect(() => {
     let cancelled = false
     repo.current!
-      .load()
-      .then((loaded) => {
-        if (!cancelled) setState(purgeTrash(loaded ?? seedState))
+      .load('main')
+      .then(async (main) => {
+        if (cancelled) return
+        if (main) {
+          activeSlot.current = 'main'
+          setState(purgeTrash(main))
+        } else {
+          const demo = await repo.current!.load('demo').catch(() => null)
+          if (cancelled) return
+          activeSlot.current = 'demo'
+          setState(purgeTrash(demo ?? seedState))
+        }
       })
       .catch(() => {
-        if (!cancelled) setState(seedState)
+        if (!cancelled) {
+          activeSlot.current = 'demo'
+          setState(seedState)
+        }
       })
     return () => {
       cancelled = true
@@ -185,7 +206,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     latestState.current = state
     const seq = ++saveSeq.current
     repo.current!
-      .save(state)
+      .save(state, activeSlot.current)
       .then(() => {
         if (seq === saveSeq.current) setSaveError(null)
         channel.current?.postMessage({ tab: tabId.current })
@@ -202,7 +223,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   // flight may not finish, so fire one more with the latest state.
   useEffect(() => {
     const flush = () => {
-      if (latestState.current) void repo.current!.save(latestState.current).catch(() => {})
+      if (latestState.current)
+        void repo.current!.save(latestState.current, activeSlot.current).catch(() => {})
     }
     window.addEventListener('pagehide', flush)
     document.addEventListener('visibilitychange', () => {
@@ -447,16 +469,36 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           return { ...s, preparedness: { ...prep, celebrated: [...prep.celebrated, stepId] } }
         }),
       logEvent: (action) => set((s) => withAudit(s, action)),
-      replaceBinder: (next) =>
+      replaceBinder: (next) => {
+        activeSlot.current = 'main'
         setState(
           withAudit(
             purgeTrash({ ...next, isDemo: false }),
             'You restored this binder from a backup file',
           ),
-        ),
+        )
+      },
       otherTabWrote,
-      resetDemo: () => setState(seedState),
-      startFresh: (ownerName, opts) => setState(emptyBinder(ownerName, opts)),
+      resetDemo: () => {
+        activeSlot.current = 'demo'
+        setState(seedState)
+      },
+      viewExample: () => {
+        // Always pristine: a walkthrough that went off-script starts clean.
+        activeSlot.current = 'demo'
+        setState(seedState)
+      },
+      exitExample: async () => {
+        const main = await repo.current!.load('main').catch(() => null)
+        if (!main) return false
+        activeSlot.current = 'main'
+        setState(purgeTrash(main))
+        return true
+      },
+      startFresh: (ownerName, opts) => {
+        activeSlot.current = 'main'
+        setState(emptyBinder(ownerName, opts))
+      },
       itemById: (itemId) => state.items.find((it) => it.id === itemId),
       personById: (personId) => state.people.find((p) => p.id === personId),
       roomById: (roomId) => state.rooms.find((r) => r.id === roomId),

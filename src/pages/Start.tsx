@@ -10,7 +10,7 @@ import { BookHeart, ChevronLeft } from '../components/icons'
  */
 export function Start() {
   const navigate = useNavigate()
-  const { state, startFresh } = useStore()
+  const { state, startFresh, viewExample } = useStore()
   const [mode, setMode] = useState<'me' | 'gift'>('me')
   const [name, setName] = useState('')
   const [giverName, setGiverName] = useState('')
@@ -128,7 +128,13 @@ export function Start() {
 
         <p className="mt-6 text-sm text-ink-soft">
           Rather look around first?{' '}
-          <button onClick={() => navigate('/binder')} className="font-semibold text-clay-dark underline">
+          <button
+            onClick={() => {
+              viewExample()
+              navigate('/binder')
+            }}
+            className="font-semibold text-clay-dark underline"
+          >
             See Margaret’s example binder
           </button>
         </p>

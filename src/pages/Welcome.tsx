@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import { useStore } from '../store'
 import { Button } from '../components/ui'
 import { BookHeart, Camera, Quote, Gift, Lock, ArrowRight } from '../components/icons'
 
@@ -22,6 +23,13 @@ const STEPS = [
 
 export function Welcome() {
   const navigate = useNavigate()
+  const { viewExample } = useStore()
+  const openExample = () => {
+    // The example lives in its own storage slot — the user's binder is never
+    // touched, and the walkthrough always starts pristine.
+    viewExample()
+    navigate('/binder')
+  }
   return (
     <div className="min-h-full bg-gradient-to-b from-cream to-cream-deep">
       <div className="mx-auto flex min-h-screen max-w-3xl flex-col items-center justify-center px-6 py-20 text-center">
@@ -42,7 +50,7 @@ export function Welcome() {
           <Button size="lg" icon={BookHeart} onClick={() => navigate('/start')}>
             Start your own binder
           </Button>
-          <Button size="lg" variant="secondary" onClick={() => navigate('/binder')}>
+          <Button size="lg" variant="secondary" onClick={openExample}>
             See an example — Margaret’s
           </Button>
         </div>

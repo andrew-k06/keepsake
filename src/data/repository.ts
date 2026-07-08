@@ -7,14 +7,17 @@
 
 import type { BinderState, Item, Valuation } from '../types'
 
+/** Storage slot: the user's binder vs. Margaret's example. Keeping them in
+    separate slots means viewing the example can never clobber real data. */
+export type BinderSlot = 'main' | 'demo'
+
 export interface BinderRepository {
-  load(): Promise<BinderState | null>
-  save(state: BinderState): Promise<void>
+  load(slot?: BinderSlot): Promise<BinderState | null>
+  save(state: BinderState, slot?: BinderSlot): Promise<void>
 }
 
 const DB_NAME = 'keepsake'
 const STORE = 'binders'
-const KEY = 'main'
 const LEGACY_LS_KEYS = ['keepsake.binder.v3', 'keepsake.binder.v2']
 
 // ---- Migration: any older stored shape -> the current BinderState ----------
@@ -122,39 +125,42 @@ class IndexedDbRepository implements BinderRepository {
     this.db = openDb()
   }
 
-  async load(): Promise<BinderState | null> {
+  async load(slot: BinderSlot = 'main'): Promise<BinderState | null> {
     const db = await this.db
     const stored = await new Promise<unknown>((resolve, reject) => {
       const tx = db.transaction(STORE, 'readonly')
-      const req = tx.objectStore(STORE).get(KEY)
+      const req = tx.objectStore(STORE).get(slot)
       req.onsuccess = () => resolve(req.result)
       req.onerror = () => reject(req.error)
     })
     if (stored) return migrate(stored)
 
-    // First run on this adapter: import any binder saved by earlier builds.
-    for (const lsKey of LEGACY_LS_KEYS) {
-      try {
-        const raw = localStorage.getItem(lsKey)
-        if (raw) {
-          const migrated = migrate(JSON.parse(raw))
-          if (migrated) {
-            await this.save(migrated)
-            return migrated
+    // First run on this adapter: import any binder saved by earlier builds
+    // (they predate slots, so legacy data belongs to 'main').
+    if (slot === 'main') {
+      for (const lsKey of LEGACY_LS_KEYS) {
+        try {
+          const raw = localStorage.getItem(lsKey)
+          if (raw) {
+            const migrated = migrate(JSON.parse(raw))
+            if (migrated) {
+              await this.save(migrated, slot)
+              return migrated
+            }
           }
+        } catch {
+          /* keep trying older keys */
         }
-      } catch {
-        /* keep trying older keys */
       }
     }
     return null
   }
 
-  async save(state: BinderState): Promise<void> {
+  async save(state: BinderState, slot: BinderSlot = 'main'): Promise<void> {
     const db = await this.db
     await new Promise<void>((resolve, reject) => {
       const tx = db.transaction(STORE, 'readwrite')
-      tx.objectStore(STORE).put(state, KEY)
+      tx.objectStore(STORE).put(state, slot)
       tx.oncomplete = () => resolve()
       tx.onerror = () => reject(tx.error ?? new Error('save failed'))
       tx.onabort = () => reject(tx.error ?? new Error('save aborted'))
@@ -163,8 +169,9 @@ class IndexedDbRepository implements BinderRepository {
 }
 
 class LocalStorageRepository implements BinderRepository {
-  async load(): Promise<BinderState | null> {
-    for (const lsKey of LEGACY_LS_KEYS) {
+  async load(slot: BinderSlot = 'main'): Promise<BinderState | null> {
+    const keys = slot === 'main' ? LEGACY_LS_KEYS : [`keepsake.binder.${slot}`]
+    for (const lsKey of keys) {
       try {
         const raw = localStorage.getItem(lsKey)
         if (raw) {
@@ -178,8 +185,9 @@ class LocalStorageRepository implements BinderRepository {
     return null
   }
 
-  async save(state: BinderState): Promise<void> {
-    localStorage.setItem('keepsake.binder.v3', JSON.stringify(state))
+  async save(state: BinderState, slot: BinderSlot = 'main'): Promise<void> {
+    const key = slot === 'main' ? 'keepsake.binder.v3' : `keepsake.binder.${slot}`
+    localStorage.setItem(key, JSON.stringify(state))
   }
 }
 

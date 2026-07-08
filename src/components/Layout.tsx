@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { NavLink, useLocation } from 'react-router-dom'
+import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 import {
   BookHeart,
@@ -36,8 +36,13 @@ const nav: NavEntry[] = [
 ]
 
 export function Layout({ children }: { children: ReactNode }) {
-  const { state, saveError, otherTabWrote } = useStore()
+  const { state, saveError, otherTabWrote, exitExample } = useStore()
   const location = useLocation()
+  const navigate = useNavigate()
+  const leaveExample = async () => {
+    const hadOwn = await exitExample()
+    navigate(hadOwn ? '/binder' : '/start')
+  }
   // Full-bleed screens (welcome, onboarding, printable documents) get no chrome.
   if (
     location.pathname === '/' ||
@@ -93,6 +98,15 @@ export function Layout({ children }: { children: ReactNode }) {
 
       {/* Main */}
       <div className="flex-1">
+        {/* Example-binder banner — honest at all times about whose binder this is */}
+        {state.isDemo && (
+          <div className="print-hidden flex flex-wrap items-center justify-center gap-3 border-b-2 border-sage/40 bg-sage/10 px-5 py-2.5 text-center font-semibold text-sage-deep">
+            <span>You’re looking at Margaret’s example binder.</span>
+            <button onClick={leaveExample} className="rounded-xl border-2 border-sage-deep px-3 py-1 hover:bg-sage/15">
+              Leave the example
+            </button>
+          </div>
+        )}
         {/* Mobile top bar */}
         <header className="md:hidden flex items-center justify-between border-b border-line bg-white/80 backdrop-blur-sm px-5 py-4">
           <Brand small />
