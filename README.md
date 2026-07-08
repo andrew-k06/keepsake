@@ -5,8 +5,11 @@ valuables, capture the *story* behind each one, record who they'd like each piec
 appraisal guidance, and leave a practical "in an emergency" guide — a gift to pass on to their family.
 
 This is a **clickable preview** for walkthroughs. It runs entirely in the browser; data is saved
-on-device (IndexedDB, with localStorage fallback — no server, no account). It's built as a real
-React app with a repository seam so a backend can slot in without touching the pages.
+on-device (IndexedDB with photos in their own store; localStorage fallback — no server, no
+account), with a download-everything JSON backup/restore on the Plan page. Margaret's example
+binder lives in its own storage slot, so walkthroughs never touch (and can never lose) a real
+user's data. It's built as a real React app with a repository seam so a backend can slot in
+without touching the pages.
 
 **A rule the whole app obeys:** it never asserts what isn't true. Simulated steps are labeled
 "Preview", insurance status is always owner-attested, wishes are never called bequests, and privacy
@@ -21,6 +24,9 @@ npm run dev      # then open http://localhost:5173/keepsake/
 ```
 
 `npm run build` makes a production bundle; `npm run preview` serves it.
+`npm test` runs the unit suite (Vitest); `npm run test:e2e` drives the six
+Playwright journeys against an auto-started dev server. The app is an
+installable PWA (Add to Home Screen) and requests persistent storage.
 
 ## Walkthrough script (for a demo)
 

@@ -9,7 +9,20 @@ Client-only React/Vite SPA (HashRouter, base `/keepsake/`). Persistence is Index
 (localStorage fallback) — state survives reloads within one browser context, and a fresh
 Playwright context is a clean slate.
 
-## Build & launch
+## The fast gate
+
+```bash
+npm test              # 22 Vitest unit tests (migrate, value, routing, guide rules)
+npm run test:e2e      # 6 Playwright journeys — auto-starts the dev server itself
+npm run build         # tsc -b && vite build (+ PWA sw) — must be clean
+```
+
+`e2e/journey.spec.ts` asserts zero console/page errors per test and covers:
+demo journey, offer-check honest refusal, fresh binder (add/persist/edit/
+rooms/search), example-binder recoverability, backup download, gift Together
+mode. Extend it rather than writing throwaway drive scripts.
+
+## Build & launch (manual driving)
 
 ```bash
 npm run build                      # tsc -b && vite build — must be clean
@@ -43,6 +56,12 @@ Flows worth driving every time:
   button renders and clicking shows the Listening state; actual transcription won't produce text.
 - The truth rule is a test surface: grep rendered pages for unlabeled simulation — anything
   simulated must show the "Preview"/"Example data" tag.
+- The example binder lives in its own storage slot: "See an example" always opens pristine
+  Margaret with a leave-banner; the user's binder is in the 'main' slot, untouched.
+- Photos live in a separate IndexedDB store ('photos'); items carry photoId. Backup export
+  inlines them back; imports/boot externalize them again.
+- Confirmations are the in-app ConfirmProvider dialog now, NOT window.confirm — drive them by
+  clicking the dialog's verb buttons, not page.on('dialog').
 
 ## Getting Ready guide (`#/guide`)
 
