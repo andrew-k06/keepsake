@@ -45,10 +45,17 @@ export function VoiceCapture({ onText }: { onText: (text: string) => void }) {
   const [interim, setInterim] = useState('')
   const recRef = useRef<SpeechRecognitionLike | null>(null)
   const finalRef = useRef('')
+  const wantListeningRef = useRef(false)
   const onTextRef = useRef(onText)
   onTextRef.current = onText
 
-  useEffect(() => () => recRef.current?.stop(), [])
+  useEffect(
+    () => () => {
+      wantListeningRef.current = false
+      recRef.current?.stop()
+    },
+    [],
+  )
 
   if (!supported) {
     return (
@@ -75,22 +82,40 @@ export function VoiceCapture({ onText }: { onText: (text: string) => void }) {
       }
       setInterim(finalRef.current + interimText)
     }
-    rec.onerror = () => {
-      setListening(false)
-      setInterim('')
+    rec.onerror = (ev) => {
+      // Permission problems end the session for real; transient errors let
+      // the auto-restart in onend try again.
+      if (ev.error === 'not-allowed' || ev.error === 'service-not-allowed') {
+        wantListeningRef.current = false
+      }
     }
     rec.onend = () => {
+      // iOS/Safari ends continuous recognition on short pauses — an elder's
+      // storytelling cadence must not cut the recording off mid-thought.
+      // While the user hasn't pressed "I'm finished", quietly start again.
+      if (wantListeningRef.current) {
+        try {
+          rec.start()
+          return
+        } catch {
+          /* fall through to a clean stop */
+        }
+      }
       setListening(false)
       const text = finalRef.current.trim()
       setInterim('')
       if (text) onTextRef.current(text)
     }
+    wantListeningRef.current = true
     rec.start()
     setListening(true)
     setInterim('')
   }
 
-  const stop = () => recRef.current?.stop()
+  const stop = () => {
+    wantListeningRef.current = false
+    recRef.current?.stop()
+  }
 
   return (
     <div className="mt-2">

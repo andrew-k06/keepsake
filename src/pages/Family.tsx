@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useStore } from '../store'
 import { Avatar, Button, Card, Field, Pill, inputClass } from '../components/ui'
 import { GuideReturnPill } from '../components/GuideReturnPill'
+import { useConfirm } from '../components/Confirm'
 import { UserPlus, Lock, Trash2, LifeBuoy } from '../components/icons'
 import type { Person } from '../types'
 
@@ -25,6 +26,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export function Family() {
   const { state, addPerson, updatePerson, removePerson, setExecutorAccess } = useStore()
+  const confirm = useConfirm()
   const trusted = state.executorAccess?.personId
     ? state.people.find((p) => p.id === state.executorAccess?.personId)
     : undefined
@@ -62,11 +64,14 @@ export function Family() {
     setShowInvite(false)
   }
 
-  const remove = (p: Person) => {
+  const remove = async (p: Person) => {
     if (
-      window.confirm(
-        `Remove ${p.name} from your binder? Any items you wished for them will go back to “Not yet decided.”`,
-      )
+      await confirm({
+        title: `Remove ${p.name}?`,
+        body: 'Any items you wished for them go back to “Not yet decided.”',
+        confirmLabel: 'Remove them',
+        cancelLabel: 'Keep them',
+      })
     ) {
       removePerson(p.id)
     }
@@ -170,7 +175,7 @@ export function Family() {
                     <option value="collaborator">Can help add & edit</option>
                   </select>
                   <button
-                    onClick={() => remove(p)}
+                    onClick={() => void remove(p)}
                     className="inline-flex min-h-11 items-center gap-1 rounded-xl px-2 py-2 text-sm font-semibold text-ink-soft hover:text-clay-dark"
                   >
                     <Trash2 className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
@@ -289,7 +294,7 @@ export function Family() {
               <div key={a.id} className="flex items-baseline justify-between gap-4 px-5 py-3">
                 <span>{a.action}</span>
                 <span className="shrink-0 text-sm text-ink-soft">
-                  {new Date(a.at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  {new Date(a.at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                 </span>
               </div>
             ))}

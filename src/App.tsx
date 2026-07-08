@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { Routes, Route, Link } from 'react-router-dom'
 import { Layout } from './components/Layout'
 import { Card } from './components/ui'
@@ -13,10 +14,16 @@ import { Emergency } from './pages/Emergency'
 import { Summary } from './pages/Summary'
 import { Plan } from './pages/Plan'
 import { OfferCheck } from './pages/OfferCheck'
-import { Guide } from './pages/Guide'
-import { PrintMemo } from './pages/PrintMemo'
-import { PrintInventory } from './pages/PrintInventory'
-import { PrintBinder } from './pages/PrintBinder'
+
+// Leaf-weight routes load on demand — the common path never pays for them.
+const Guide = lazy(() => import('./pages/Guide').then((m) => ({ default: m.Guide })))
+const PrintMemo = lazy(() => import('./pages/PrintMemo').then((m) => ({ default: m.PrintMemo })))
+const PrintInventory = lazy(() =>
+  import('./pages/PrintInventory').then((m) => ({ default: m.PrintInventory })),
+)
+const PrintBinder = lazy(() =>
+  import('./pages/PrintBinder').then((m) => ({ default: m.PrintBinder })),
+)
 
 function NotFound() {
   return (
@@ -36,6 +43,11 @@ function NotFound() {
 function App() {
   return (
     <Layout>
+      <Suspense
+        fallback={
+          <p className="mt-16 text-center font-serif text-2xl text-ink-soft">One moment…</p>
+        }
+      >
       <Routes>
         <Route path="/" element={<Welcome />} />
         <Route path="/start" element={<Start />} />
@@ -55,6 +67,7 @@ function App() {
         <Route path="/print/inventory" element={<PrintInventory />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
+      </Suspense>
     </Layout>
   )
 }

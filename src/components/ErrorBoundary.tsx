@@ -1,5 +1,6 @@
 import { Component } from 'react'
 import type { ReactNode } from 'react'
+import { recordError } from '../lib/telemetry'
 
 /**
  * Last-resort crash screen. Calm, plain-language, and truthful: the binder is
@@ -10,6 +11,10 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, { hasError
 
   static getDerivedStateFromError() {
     return { hasError: true }
+  }
+
+  componentDidCatch(error: Error) {
+    recordError('render', error.message, error.stack)
   }
 
   render() {

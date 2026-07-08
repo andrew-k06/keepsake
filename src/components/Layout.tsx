@@ -30,7 +30,7 @@ const nav: NavEntry[] = [
   { to: '/guide', label: 'Getting Ready', short: 'Path', icon: Compass, desktopOnly: true },
   { to: '/family', label: 'Family', short: 'Family', icon: Users },
   { to: '/appraisals', label: 'Appraisals', short: 'Appraise', icon: BadgeCheck },
-  { to: '/check', label: 'Before You Sell', short: 'Offers', icon: Shield },
+  { to: '/check', label: 'Before You Sell', short: 'Selling', icon: Shield },
   { to: '/emergency', label: 'In an Emergency', short: 'Emergency', icon: LifeBuoy },
   { to: '/summary', label: 'For My Family', short: 'Summary', icon: HeartHandshake },
 ]

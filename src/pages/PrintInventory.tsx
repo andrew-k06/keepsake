@@ -15,7 +15,7 @@ export function PrintInventory() {
   const rooms = new Map(state.rooms.map((r) => [r.id, r.name]))
   const owner = state.people.find((p) => p.role === 'owner')
 
-  const sourceLabel: Record<string, string> = {
+  const sourceLabel: Record<import('../types').ValuationSource, string> = {
     'in-person-appraisal': 'appraised (in person)',
     'photo-appraisal': 'appraised (photos)',
     owner: 'owner estimate',

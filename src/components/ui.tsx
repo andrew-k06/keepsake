@@ -70,31 +70,6 @@ export function Card({
   )
 }
 
-// ---- SectionTitle: serif heading + optional subtitle. Added optional `icon`. ----
-export function SectionTitle({
-  children,
-  sub,
-  icon: Icon,
-}: {
-  children: ReactNode
-  sub?: string
-  icon?: LucideIcon
-}) {
-  return (
-    <div className="mb-5">
-      <h2 className="flex items-center gap-3 text-3xl">
-        {Icon && (
-          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-cream-deep text-clay">
-            <Icon className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
-          </span>
-        )}
-        {children}
-      </h2>
-      {sub && <p className="text-ink-soft mt-1 text-lg">{sub}</p>}
-    </div>
-  )
-}
-
 const appraisalMeta: Record<
   AppraisalStatus,
   { label: string; cls: string; icon: LucideIcon }

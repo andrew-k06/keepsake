@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useStore } from '../store'
 import { Button, Card, Field, inputClass } from '../components/ui'
 import { GuideReturnPill } from '../components/GuideReturnPill'
+import { useConfirm } from '../components/Confirm'
 import { LifeBuoy, ScrollText, Heart, Plus, Pencil, Trash2 } from '../components/icons'
 
 // Guided prompts — the questions families actually need answered. Tapping one
@@ -21,6 +22,7 @@ export function Emergency() {
   const [label, setLabel] = useState('')
   const [labelError, setLabelError] = useState('')
   const [detail, setDetail] = useState('')
+  const confirm = useConfirm()
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editDetail, setEditDetail] = useState('')
 
@@ -50,8 +52,15 @@ export function Emergency() {
     setEditingId(null)
   }
 
-  const remove = (id: string, noteLabel: string) => {
-    if (window.confirm(`Delete the note “${noteLabel}”?`)) deleteEmergency(id)
+  const remove = async (id: string, noteLabel: string) => {
+    if (
+      await confirm({
+        title: `Delete “${noteLabel}”?`,
+        confirmLabel: 'Delete it',
+        cancelLabel: 'Keep it',
+      })
+    )
+      deleteEmergency(id)
   }
 
   return (
@@ -163,7 +172,7 @@ export function Emergency() {
                   Edit
                 </button>
                 <button
-                  onClick={() => remove(e.id, e.label)}
+                  onClick={() => void remove(e.id, e.label)}
                   className="inline-flex min-h-11 items-center gap-1 px-2 py-2 text-sm font-semibold text-ink-soft hover:text-clay-dark"
                 >
                   <Trash2 className="h-4 w-4" strokeWidth={2} aria-hidden="true" />

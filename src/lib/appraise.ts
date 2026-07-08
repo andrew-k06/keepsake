@@ -70,6 +70,13 @@ export function routeAppraisal(item: Item): AppraisalRoute {
   }
 }
 
+/** Status should follow the evidence: once a professional valuation exists,
+    the item IS appraised regardless of what the request flow last set. */
+export function reconcileAppraisalStatus(item: Item): Item['appraisalStatus'] {
+  if (isAppraised(item)) return 'appraised'
+  return item.appraisalStatus
+}
+
 export const tierTitle: Record<AppraisalTier, string> = {
   'none-needed': 'You likely don’t need to pay for this one',
   'photo-review': 'A photo review is the right fit',

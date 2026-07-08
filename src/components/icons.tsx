@@ -154,7 +154,6 @@ const CATEGORY_ICONS: Record<string, LucideIcon> = {
   china: Utensils,
   silver: Utensils,
   furniture: Armchair,
-  lighting: Lamp,
   collectibles: Coins,
   coins: Coins,
   antiques: Amphora,

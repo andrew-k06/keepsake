@@ -3,11 +3,14 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useStore, money } from '../store'
 import { bestAmount } from '../lib/value'
 import { prepareProgress } from '../lib/prepare'
+import { reconcileAppraisalStatus } from '../lib/appraise'
+import { storiesTold } from '../lib/selectors'
 import { Button, Card, AppraisalBadge } from '../components/ui'
 import { ItemCard } from '../components/ItemCard'
 import { ItemVisual } from '../components/ItemVisual'
 import { NextStepCard } from '../components/NextStepCard'
 import { GuideReturnPill } from '../components/GuideReturnPill'
+import { STARTER_ITEM_LIMIT } from '../types'
 import type { Item } from '../types'
 import {
   Plus,
@@ -53,7 +56,7 @@ export function Home() {
     localStorage.setItem(VIEW_KEY, v)
   }
 
-  const withStory = state.items.filter((it) => it.story.trim()).length
+  const withStory = storiesTold(state.items)
   const withHeir = state.items.filter((it) => it.beneficiaryId).length
   const recent = state.items.slice(0, view === 'list' ? 6 : 4)
   const trash = state.trash ?? []
@@ -89,7 +92,15 @@ export function Home() {
 
       {/* Stats — stories and wishes lead; money never headlines the binder */}
       <div className="mt-8 grid gap-4 sm:grid-cols-3">
-        <Stat icon={BookHeart} label="Your items" value={String(state.items.length)} />
+        <Stat
+          icon={BookHeart}
+          label="Your items"
+          value={
+            state.plan.tier === 'starter'
+              ? `${state.items.length} of ${STARTER_ITEM_LIMIT} free`
+              : String(state.items.length)
+          }
+        />
         <Stat icon={Quote} label="Stories told" value={`${withStory} of ${state.items.length}`} />
         <Stat
           icon={Users}
@@ -351,7 +362,7 @@ function ItemRow({ item }: { item: Item }) {
         </div>
       </div>
       <div className="hidden shrink-0 sm:block">
-        <AppraisalBadge status={item.appraisalStatus} />
+        <AppraisalBadge status={reconcileAppraisalStatus(item)} />
       </div>
       <div className="shrink-0 text-right">
         <div className="text-lg font-semibold">{money(bestAmount(item))}</div>

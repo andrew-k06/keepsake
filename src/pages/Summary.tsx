@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useStore, money } from '../store'
 import { bestAmount } from '../lib/value'
+import { storiesTold as storiesTotal } from '../lib/selectors'
 import { Button, Card, Avatar } from '../components/ui'
 import { ItemVisual } from '../components/ItemVisual'
 import { GuideReturnPill } from '../components/GuideReturnPill'
@@ -13,7 +14,7 @@ export function Summary() {
   const [showValues, setShowValues] = useState(false)
 
   const heirs = state.people.filter((p) => p.role !== 'owner')
-  const storiesTold = state.items.filter((it) => it.story.trim()).length
+  const storiesTold = storiesTotal(state.items)
 
   const shareByEmail = () => {
     // A real, honest share: opens the user's own mail app with a plain-text summary.

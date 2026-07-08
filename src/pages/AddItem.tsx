@@ -16,6 +16,7 @@ import { makeValuation } from '../lib/value'
 import { exampleIdentification, type IdSuggestion } from '../lib/identify'
 import { VoiceCapture } from '../components/VoiceCapture'
 import { GuideReturnPill } from '../components/GuideReturnPill'
+import { useConfirm } from '../components/Confirm'
 import { CATEGORIES, STARTER_ITEM_LIMIT } from '../types'
 import type { AppraisalStatus, Item } from '../types'
 
@@ -42,10 +43,17 @@ export function AddItem() {
   const [story, setStory] = useState('')
   const [beneficiaryId, setBeneficiaryId] = useState('')
 
+  const confirm = useConfirm()
   const dirty = Boolean(photo || name || story || estValue)
 
-  const confirmLeave = () =>
-    !dirty || window.confirm('Leave without saving? The photo and anything you typed here will be discarded.')
+  const confirmLeave = async () =>
+    !dirty ||
+    (await confirm({
+      title: 'Leave without saving?',
+      body: 'The photo and anything you typed here will be discarded.',
+      confirmLabel: 'Discard it',
+      cancelLabel: 'Keep working',
+    }))
 
   const onPickPhoto = async (file: File) => {
     setPhotoError('')
@@ -169,7 +177,7 @@ export function AddItem() {
     <div className="mx-auto max-w-2xl">
       <GuideReturnPill />
       <button
-        onClick={() => confirmLeave() && navigate(-1)}
+        onClick={async () => (await confirmLeave()) && navigate(-1)}
         className="inline-flex min-h-11 items-center gap-1 py-2 text-ink-soft hover:text-ink"
       >
         <ChevronLeft className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
@@ -365,7 +373,7 @@ export function AddItem() {
           </Field>
 
           <div className="mt-6 flex justify-end gap-3">
-            <Button variant="ghost" onClick={() => confirmLeave() && navigate('/binder')}>
+            <Button variant="ghost" onClick={async () => (await confirmLeave()) && navigate('/binder')}>
               Cancel
             </Button>
             <Button onClick={save}>Save to my binder</Button>

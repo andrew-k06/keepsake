@@ -10,6 +10,7 @@
 //   - No percentages, no dates, no streaks — words and checkmarks only.
 
 import type { BinderState, PreparednessState } from '../types'
+import { storiesTold as storiesToldOf } from './selectors'
 
 export interface GuideStep {
   id: string
@@ -42,7 +43,7 @@ export interface GuideChapter {
 const hasNote = (s: BinderState, re: RegExp) =>
   s.emergency.some((e) => re.test(`${e.label} ${e.detail}`))
 
-const storiesTold = (s: BinderState) => s.items.filter((it) => it.story.trim()).length
+const storiesTold = (s: BinderState) => storiesToldOf(s.items)
 
 export const CHAPTERS: GuideChapter[] = [
   { id: 'things', title: 'The things that matter', sub: 'Start with the stories — the part that feels like remembering, because it is.' },

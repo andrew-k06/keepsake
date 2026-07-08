@@ -64,7 +64,10 @@ export interface Item {
   roomId: string
   emoji?: string // DEPRECATED: legacy placeholder. No longer rendered — kept for back-compat.
   image?: string // hosted photographic image URL (e.g. seed data)
-  photo?: string // data URL when the user adds a real photo of their own
+  photo?: string // inline data URL (legacy / no-IndexedDB fallback / export files)
+  /** Reference into the photo store — the normal home for user photos, kept
+      OUT of the binder blob so saves stay light. Resolved via usePhoto(). */
+  photoId?: string
   story: string // the provenance / "why it matters" narrative
   acquired?: string
   serial?: string

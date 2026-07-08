@@ -1,5 +1,36 @@
+import { useEffect, useState } from 'react'
 import type { Item } from '../types'
+import { photoStore } from '../data/repository'
 import { CategoryIcon } from './icons'
+
+/** Resolve a stored photo id to its data URL (cache-first, then IndexedDB). */
+function usePhoto(photoId?: string): string | undefined {
+  const [src, setSrc] = useState<string | undefined>(() =>
+    photoId ? photoStore.cached(photoId) : undefined,
+  )
+  useEffect(() => {
+    if (!photoId) {
+      setSrc(undefined)
+      return
+    }
+    const hit = photoStore.cached(photoId)
+    if (hit) {
+      setSrc(hit)
+      return
+    }
+    let alive = true
+    photoStore
+      .get(photoId)
+      .then((v) => {
+        if (alive && v) setSrc(v)
+      })
+      .catch(() => {})
+    return () => {
+      alive = false
+    }
+  }, [photoId])
+  return src
+}
 
 /**
  * ItemVisual — the single, canonical way to render an item's picture.
@@ -26,7 +57,8 @@ export function ItemVisual({
   /** Load immediately — required on printable views so photos aren't blank on paper. */
   eager?: boolean
 }) {
-  const src = item.photo ?? item.image
+  const stored = usePhoto(item.photoId)
+  const src = stored ?? item.photo ?? item.image
 
   if (src) {
     return (

@@ -5,6 +5,7 @@ import { exportBinder, readBackupFile } from '../lib/backup'
 import { Button, Card, DemoTag, Pill } from '../components/ui'
 import { BookHeart, Gift, TrendingUp, CircleCheckBig, FileText, Undo2 } from '../components/icons'
 import { STARTER_ITEM_LIMIT } from '../types'
+import { useConfirm } from '../components/Confirm'
 
 /**
  * Plans. Structure over copy: the senior-facing offer is buy-once-own-forever
@@ -16,11 +17,12 @@ export function Plan() {
   const navigate = useNavigate()
   const { state, setPlan, logEvent, replaceBinder } = useStore()
   const tier = state.plan.tier
+  const confirm = useConfirm()
   const importRef = useRef<HTMLInputElement>(null)
   const [importError, setImportError] = useState('')
 
-  const doExport = () => {
-    exportBinder(state)
+  const doExport = async () => {
+    await exportBinder(state)
     logEvent('You downloaded a backup of your binder')
   }
 
@@ -29,9 +31,12 @@ export function Plan() {
     try {
       const next = await readBackupFile(file)
       if (
-        window.confirm(
-          `Restore “${next.binderName}” from this file? Your current binder (${state.binderName}) will be replaced.`,
-        )
+        await confirm({
+          title: `Restore “${next.binderName}”?`,
+          body: `Your current binder (${state.binderName}) will be replaced by the one in this file.`,
+          confirmLabel: 'Restore it',
+          cancelLabel: 'Go back',
+        })
       ) {
         replaceBinder(next)
       }
@@ -147,7 +152,7 @@ export function Plan() {
           like.
         </p>
         <div className="mt-4 flex flex-wrap gap-3">
-          <Button variant="secondary" icon={FileText} onClick={doExport}>
+          <Button variant="secondary" icon={FileText} onClick={() => void doExport()}>
             Download everything
           </Button>
           <Button variant="ghost" icon={Undo2} onClick={() => importRef.current?.click()}>

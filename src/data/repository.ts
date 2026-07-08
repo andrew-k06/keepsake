@@ -18,7 +18,101 @@ export interface BinderRepository {
 
 const DB_NAME = 'keepsake'
 const STORE = 'binders'
+const PHOTO_STORE = 'photos'
 const LEGACY_LS_KEYS = ['keepsake.binder.v3', 'keepsake.binder.v2']
+
+// ---- Photo records --------------------------------------------------------
+//
+// Photos live OUTSIDE the binder blob. Serializing a ~300KB data URL per item
+// into every whole-binder save meant ~15MB structured-cloned per keystroke at
+// 50 items; as separate records, a save touches only the binder's text.
+
+const photoCache = new Map<string, string>()
+
+export const photoStoreAvailable = typeof indexedDB !== 'undefined'
+
+export const photoStore = {
+  prime(id: string, dataUrl: string): void {
+    photoCache.set(id, dataUrl)
+  },
+  cached(id: string): string | undefined {
+    return photoCache.get(id)
+  },
+  async put(id: string, dataUrl: string): Promise<void> {
+    photoCache.set(id, dataUrl)
+    const db = await sharedDb()
+    await new Promise<void>((resolve, reject) => {
+      const tx = db.transaction(PHOTO_STORE, 'readwrite')
+      tx.objectStore(PHOTO_STORE).put(dataUrl, id)
+      tx.oncomplete = () => resolve()
+      tx.onerror = () => reject(tx.error ?? new Error('photo save failed'))
+    })
+  },
+  async get(id: string): Promise<string | null> {
+    const hit = photoCache.get(id)
+    if (hit) return hit
+    const db = await sharedDb()
+    const value = await new Promise<unknown>((resolve, reject) => {
+      const tx = db.transaction(PHOTO_STORE, 'readonly')
+      const req = tx.objectStore(PHOTO_STORE).get(id)
+      req.onsuccess = () => resolve(req.result)
+      req.onerror = () => reject(req.error)
+    })
+    if (typeof value === 'string') {
+      photoCache.set(id, value)
+      return value
+    }
+    return null
+  },
+}
+
+let dbPromise: Promise<IDBDatabase> | null = null
+function sharedDb(): Promise<IDBDatabase> {
+  if (!dbPromise) dbPromise = openDb()
+  return dbPromise
+}
+
+/** Move inline photo data URLs into the photo store (boot + import path).
+    No-op where IndexedDB is unavailable — photos stay inline there. */
+export async function externalizePhotos(state: BinderState): Promise<BinderState> {
+  if (!photoStoreAvailable) return state
+  const moveAll = async (items: Item[]): Promise<Item[]> =>
+    Promise.all(
+      items.map(async (it) => {
+        if (it.photo?.startsWith('data:')) {
+          const pid = it.photoId ?? `ph-${it.id}`
+          await photoStore.put(pid, it.photo).catch(() => undefined)
+          return { ...it, photo: undefined, photoId: pid }
+        }
+        return it
+      }),
+    )
+  return {
+    ...state,
+    items: await moveAll(state.items),
+    trash: state.trash ? await moveAll(state.trash) : state.trash,
+  }
+}
+
+/** Inline stored photos back into the state (backup export — the file the
+    user holds must be complete on its own). */
+export async function inlinePhotos(state: BinderState): Promise<BinderState> {
+  const fill = async (items: Item[]): Promise<Item[]> =>
+    Promise.all(
+      items.map(async (it) => {
+        if (it.photoId && !it.photo) {
+          const dataUrl = await photoStore.get(it.photoId).catch(() => null)
+          if (dataUrl) return { ...it, photo: dataUrl, photoId: undefined }
+        }
+        return it
+      }),
+    )
+  return {
+    ...state,
+    items: await fill(state.items),
+    trash: state.trash ? await fill(state.trash) : state.trash,
+  }
+}
 
 // ---- Migration: any older stored shape -> the current BinderState ----------
 
@@ -95,6 +189,7 @@ function migrateItem(it: Record<string, unknown>): Item {
       })
     }
   }
+  // photoId passthrough is implicit via rest-spread below.
   // Drop deprecated fields; default anything the UI dereferences.
   const { estValue: _e, appraisedValue: _a, emoji: _emoji, ...rest } = it
   const item = rest as unknown as Item
@@ -112,9 +207,11 @@ function migrateItem(it: Record<string, unknown>): Item {
 
 function openDb(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, 1)
+    const req = indexedDB.open(DB_NAME, 2)
     req.onupgradeneeded = () => {
       if (!req.result.objectStoreNames.contains(STORE)) req.result.createObjectStore(STORE)
+      if (!req.result.objectStoreNames.contains(PHOTO_STORE))
+        req.result.createObjectStore(PHOTO_STORE)
     }
     req.onsuccess = () => resolve(req.result)
     req.onerror = () => reject(req.error ?? new Error('IndexedDB unavailable'))
@@ -125,7 +222,7 @@ class IndexedDbRepository implements BinderRepository {
   private db: Promise<IDBDatabase>
 
   constructor() {
-    this.db = openDb()
+    this.db = sharedDb()
   }
 
   async load(slot: BinderSlot = 'main'): Promise<BinderState | null> {

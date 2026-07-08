@@ -63,7 +63,7 @@ export const seedState: BinderState = {
   },
   audit: [
     { id: 'a-1', at: '2026-06-28T15:20:00.000Z', action: 'Sarah added a memory to “Grandfather Clock”' },
-    { id: 'a-2', at: '2026-06-25T10:05:00.000Z', action: 'You decided “Grandmother’s Engagement Ring” should go to Sarah' },
+    { id: 'a-2', at: '2026-06-25T10:05:00.000Z', action: 'You changed who “Grandmother’s Engagement Ring” goes to: Sarah' },
     { id: 'a-3', at: '2026-05-14T09:00:00.000Z', action: 'Sarah set this binder up as a gift' },
   ],
   emergency: [

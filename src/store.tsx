@@ -12,7 +12,7 @@ import type {
   Room,
 } from './types'
 import { seedState } from './data/seed'
-import { createRepository } from './data/repository'
+import { createRepository, externalizePhotos, photoStore, photoStoreAvailable } from './data/repository'
 import { STEPS, stepDone, emptyPreparedness } from './lib/prepare'
 
 const TRASH_DAYS = 30
@@ -29,6 +29,8 @@ interface StoreApi {
   deleteItem: (id: string) => void
   restoreItem: (id: string) => void
   addMemory: (itemId: string, personId: string, text: string) => void
+  /** Set/replace an item's photo from a captured data URL (stored outside the blob). */
+  setItemPhoto: (itemId: string, dataUrl: string) => void
   addDocument: (itemId: string, doc: Omit<ItemDocument, 'id'>) => void
   removeDocument: (itemId: string, docId: string) => void
   addRoom: (name: string) => string
@@ -138,6 +140,16 @@ function ensurePrep(s: BinderState) {
   return prep
 }
 
+/** Move a freshly captured data URL into the photo store, returning the item
+    patch to apply. Falls back to inline when IndexedDB is unavailable. */
+function externalizeCapture(itemId: string, dataUrl: string): Partial<Item> {
+  if (!photoStoreAvailable) return { photo: dataUrl, photoId: undefined }
+  const pid = `ph-${itemId}-${Date.now().toString(36)}`
+  photoStore.prime(pid, dataUrl)
+  void photoStore.put(pid, dataUrl).catch(() => {})
+  return { photo: undefined, photoId: pid }
+}
+
 /** Append an audit line, keeping the record bounded. */
 function withAudit(s: BinderState, action: string): BinderState {
   return {
@@ -172,7 +184,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         if (cancelled) return
         if (main) {
           activeSlot.current = 'main'
-          setState(purgeTrash(main))
+          setState(purgeTrash(await externalizePhotos(main)))
         } else {
           const demo = await repo.current!.load('demo').catch(() => null)
           if (cancelled) return
@@ -251,9 +263,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       addItem: (item) => {
         const newId = id('i')
         const now = new Date().toISOString()
+        const photoPatch = item.photo?.startsWith('data:')
+          ? externalizeCapture(newId, item.photo)
+          : {}
         set((s) =>
           withAudit(
-            { ...s, items: [{ ...item, id: newId, createdAt: now, updatedAt: now }, ...s.items] },
+            {
+              ...s,
+              items: [
+                { ...item, ...photoPatch, id: newId, createdAt: now, updatedAt: now },
+                ...s.items,
+              ],
+            },
             `You added “${item.name}”`,
           ),
         )
@@ -332,6 +353,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             `${person.relationship === 'Me' ? 'You' : person.name} added a memory to “${item.name}”`,
           )
         }),
+      setItemPhoto: (itemId, dataUrl) =>
+        set((s) => ({
+          ...s,
+          items: s.items.map((it) =>
+            it.id === itemId
+              ? { ...it, ...externalizeCapture(itemId, dataUrl), updatedAt: new Date().toISOString() }
+              : it,
+          ),
+        })),
       addDocument: (itemId, doc) =>
         set((s) => {
           const item = s.items.find((it) => it.id === itemId)
@@ -537,11 +567,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       logEvent: (action) => set((s) => withAudit(s, action)),
       replaceBinder: (next) => {
         activeSlot.current = 'main'
-        setState(
-          withAudit(
-            purgeTrash({ ...next, isDemo: false }),
-            'You restored this binder from a backup file',
-          ),
+        void externalizePhotos({ ...next, isDemo: false }).then((moved) =>
+          setState(withAudit(purgeTrash(moved), 'You restored this binder from a backup file')),
         )
       },
       otherTabWrote,

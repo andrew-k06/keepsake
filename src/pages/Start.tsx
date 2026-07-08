@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 import { Button, Card, Field, InlineError, inputClass } from '../components/ui'
 import { BookHeart, ChevronLeft } from '../components/icons'
+import { useConfirm } from '../components/Confirm'
 
 /**
  * First-run onboarding: a real "start your own binder" path so no one lands
@@ -11,6 +12,7 @@ import { BookHeart, ChevronLeft } from '../components/icons'
 export function Start() {
   const navigate = useNavigate()
   const { state, startFresh, viewExample } = useStore()
+  const confirm = useConfirm()
   const [mode, setMode] = useState<'me' | 'gift'>('me')
   const [name, setName] = useState('')
   const [giverName, setGiverName] = useState('')
@@ -22,7 +24,7 @@ export function Start() {
   const hasExistingData = state.items.length > 0 || state.emergency.length > 0
   const isDemo = state.isDemo === true
 
-  const begin = () => {
+  const begin = async () => {
     if (!name.trim()) {
       setError(
         mode === 'me'
@@ -34,9 +36,12 @@ export function Start() {
     if (
       hasExistingData &&
       !isDemo &&
-      !window.confirm(
-        `Start a brand-new binder? Your current binder (${state.binderName}) and everything in it will be replaced.`,
-      )
+      !(await confirm({
+        title: 'Start a brand-new binder?',
+        body: `Your current binder (${state.binderName}) and everything in it will be replaced. Consider downloading a backup from the Plan page first.`,
+        confirmLabel: 'Replace it',
+        cancelLabel: 'Go back',
+      }))
     ) {
       return
     }
@@ -101,7 +106,7 @@ export function Start() {
                 setName(e.target.value)
                 if (e.target.value.trim()) setError('')
               }}
-              onKeyDown={(e) => e.key === 'Enter' && begin()}
+              onKeyDown={(e) => e.key === 'Enter' && void begin()}
               placeholder="Margaret"
             />
           </Field>
@@ -120,7 +125,7 @@ export function Start() {
           )}
           {error && <InlineError>{error}</InlineError>}
           <div className="mt-5">
-            <Button full size="lg" onClick={begin}>
+            <Button full size="lg" onClick={() => void begin()}>
               {mode === 'me' ? 'Create my binder' : 'Create their binder'}
             </Button>
           </div>

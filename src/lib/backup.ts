@@ -6,12 +6,18 @@
 // gate as storage, so a stale or hand-edited file can't crash the app.
 
 import type { BinderState } from '../types'
-import { migrate } from '../data/repository'
+import { migrate, inlinePhotos } from '../data/repository'
+import { readErrorLog } from './telemetry'
 
-export function exportBinder(state: BinderState): void {
+export async function exportBinder(state: BinderState): Promise<void> {
   const stamp = new Date().toISOString().slice(0, 10)
   const name = `keepsake-binder-${stamp}.json`
-  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' })
+  // The file must be complete on its own: pull stored photos back inline.
+  const complete = await inlinePhotos(state)
+  // _diagnostics: local crash log (messages/stacks only, never binder content)
+  // so support can help without the app ever phoning home. migrate() ignores it.
+  const payload = { ...complete, _diagnostics: readErrorLog() }
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url

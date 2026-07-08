@@ -2,9 +2,10 @@ import { useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useStore, money } from '../store'
 import { bestAmount, valueSourceLabel } from '../lib/value'
-import { routeAppraisal, tierTitle } from '../lib/appraise'
+import { routeAppraisal, tierTitle, reconcileAppraisalStatus } from '../lib/appraise'
 import { compressImage } from '../lib/photo'
 import { TrendCard } from '../components/TrendCard'
+import { useConfirm } from '../components/Confirm'
 import { VoiceCapture } from '../components/VoiceCapture'
 import { CATEGORIES } from '../types'
 import type { ItemDocument } from '../types'
@@ -47,8 +48,10 @@ export function ItemDetail() {
     deleteItem,
     addMemory,
     addDocument,
+    setItemPhoto,
   } = useStore()
   const navigate = useNavigate()
+  const confirm = useConfirm()
   const item = itemById(itemId)
 
   const [editingStory, setEditingStory] = useState(false)
@@ -135,7 +138,7 @@ export function ItemDetail() {
     setPhotoError('')
     try {
       const dataUrl = await compressImage(file)
-      updateItem(item.id, { photo: dataUrl })
+      setItemPhoto(item.id, dataUrl)
     } catch {
       setPhotoError('We could not read that photo — please try another one.')
     }
@@ -180,7 +183,7 @@ export function ItemDetail() {
               className="inline-flex min-h-11 items-center gap-2 rounded-2xl border-2 border-line bg-white px-4 py-2 font-semibold text-ink-soft transition hover:border-clay hover:text-ink"
             >
               <Pencil className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
-              {item.photo || item.image ? 'Change the photo' : 'Add a photo'}
+              {item.photo || item.photoId || item.image ? 'Change the photo' : 'Add a photo'}
             </button>
             <input
               ref={photoRef}
@@ -213,7 +216,7 @@ export function ItemDetail() {
                 No insurance noted
               </Pill>
             )}
-            <AppraisalBadge status={item.appraisalStatus} />
+            <AppraisalBadge status={reconcileAppraisalStatus(item)} />
           </div>
 
           <div className="mt-4 flex flex-wrap items-start justify-between gap-2">
@@ -450,6 +453,13 @@ export function ItemDetail() {
 
           {/* Market trend — kind, sourced, never a stock ticker */}
           <TrendCard item={item} familyPlan={state.plan.tier === 'family'} />
+          <p className="print-hidden mt-2 text-sm text-ink-soft">
+            Someone offering to buy it?{' '}
+            <Link to="/check" className="font-semibold text-clay-dark underline">
+              Check the offer first
+            </Link>
+            .
+          </p>
 
           {/* Who it goes to */}
           <div className="mt-6">
@@ -675,16 +685,31 @@ export function ItemDetail() {
             </div>
           )}
 
+          {/* A pending request is never a dead end — the plan can change */}
+          {(item.appraisalStatus === 'photo-review' || item.appraisalStatus === 'needs-in-person' || item.appraisalStatus === 'requested') && (
+            <div className="mt-6">
+              <Button
+                variant="ghost"
+                onClick={() => updateItem(item.id, { appraisalStatus: 'none' })}
+              >
+                Cancel the appraisal request
+              </Button>
+            </div>
+          )}
+
           {/* Actions */}
           <div className="mt-6 flex flex-wrap items-center gap-3">
             <Button
               variant="ghost"
               icon={Trash2}
-              onClick={() => {
+              onClick={async () => {
                 if (
-                  confirm(
-                    `Remove "${item.name}" from the binder? You can bring it back from Recently removed for 30 days.`,
-                  )
+                  await confirm({
+                    title: `Remove “${item.name}”?`,
+                    body: 'It moves to Recently removed, where you can bring it back for 30 days.',
+                    confirmLabel: 'Remove it',
+                    cancelLabel: 'Keep it',
+                  })
                 ) {
                   deleteItem(item.id)
                   navigate('/binder')
