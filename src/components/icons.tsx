@@ -64,6 +64,8 @@ import {
   Amphora,
   Music,
   Package,
+  Layers,
+  Globe,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
@@ -129,6 +131,8 @@ export {
   Amphora,
   Music,
   Package,
+  Layers,
+  Globe,
 }
 export { ImageIcon }
 export type { LucideIcon }
@@ -158,6 +162,8 @@ const CATEGORY_ICONS: Record<string, LucideIcon> = {
   coins: Coins,
   antiques: Amphora,
   instruments: Music,
+  'rugs & textiles': Layers,
+  'décor & cultural pieces': Globe,
   other: Package,
 }
 

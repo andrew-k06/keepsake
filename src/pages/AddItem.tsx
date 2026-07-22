@@ -62,7 +62,12 @@ export function AddItem() {
       // Downscale + re-encode: keeps storage safe and strips location metadata.
       const dataUrl = await compressImage(file)
       setPhoto(dataUrl)
-      runIdentify()
+      // Simulated identification runs ONLY in the example binder, where every
+      // suggestion is labeled theater. A real photo must never receive a
+      // fabricated guess — the first ICP field test proved no label survives
+      // the app being confidently wrong about your own sofa.
+      if (state.isDemo) runIdentify()
+      else setStep('details')
     } catch {
       setPhotoError('We could not read that photo. Please try another one.')
     }
@@ -124,7 +129,7 @@ export function AddItem() {
     // provenance is never blurred.
     const valuations = [
       ...(estValue ? [makeValuation('owner', Number(estValue))] : []),
-      ...(suggestion && category === suggestion.category
+      ...(suggestion && category === suggestion.category && suggestion.low != null && suggestion.high != null
         ? [
             makeValuation('ai', suggestion.low, suggestion.high, {
               confidence: suggestion.confidence === 'guessing' ? 'guessing' : 'fairly sure',
@@ -187,12 +192,16 @@ export function AddItem() {
       </button>
       <h1 className="mt-3 text-4xl">Add something precious</h1>
 
-      <StepDots step={step} />
+      <StepDots step={step} showIdentify={state.isDemo === true} />
 
       {step === 'capture' && (
         <Card className="mt-6 p-8 text-center">
           <p className="text-xl">Let’s start with a photo.</p>
-          <p className="text-ink-soft mt-1">Take a picture and we’ll help fill in the details for you.</p>
+          <p className="text-ink-soft mt-1">
+            {state.isDemo
+              ? 'Take a picture and we’ll help fill in the details for you.'
+              : 'A photo is all it takes to start — you’ll tell us what it is on the next page.'}
+          </p>
 
           <button
             type="button"
@@ -259,13 +268,19 @@ export function AddItem() {
                     This looks like a <span className="font-semibold">{suggestion.name}</span> — I can
                     see {suggestion.evidence}.
                   </p>
-                  <p className="mt-2 text-ink-soft">
-                    Pieces like this often sell for{' '}
-                    <span className="font-semibold text-ink">
-                      ${suggestion.low.toLocaleString()}–${suggestion.high.toLocaleString()}
-                    </span>
-                    . To be sure, a photo of {suggestion.followUp} would settle it.
-                  </p>
+                  {suggestion.low != null && suggestion.high != null ? (
+                    <p className="mt-2 text-ink-soft">
+                      Pieces like this often sell for{' '}
+                      <span className="font-semibold text-ink">
+                        ${suggestion.low.toLocaleString()}–${suggestion.high.toLocaleString()}
+                      </span>
+                      . To be sure, a photo of {suggestion.followUp} would settle it.
+                    </p>
+                  ) : (
+                    <p className="mt-2 text-ink-soft">
+                      No price guess on this one — {suggestion.followUp}.
+                    </p>
+                  )}
                   <p className="mt-3">
                     <DemoTag>Preview — an example of how the full app explains what it sees</DemoTag>
                   </p>
@@ -293,6 +308,12 @@ export function AddItem() {
             <p className="mb-5 rounded-2xl bg-amber/15 px-4 py-3 text-sm text-ink-soft">
               We suggested the name and category below — please check them and change anything that
               isn’t right.
+            </p>
+          )}
+          {!state.isDemo && photo && (
+            <p className="mb-5 rounded-2xl bg-cream px-4 py-3 text-sm text-ink-soft">
+              One day soon, Keepsake will look at your photo and offer a first guess — and show its
+              reasoning. Until then, your words are better than any guess.
             </p>
           )}
           <Field label="What is it?" error={nameError}>
@@ -342,7 +363,11 @@ export function AddItem() {
               the accessibility tree and click routing), so the voice control
               sits between the heading and the labeled textarea. */}
           <div className="mb-5">
-            <span className="mb-1 block font-semibold">Tell its story</span>
+            <span className="mb-1 block font-semibold">Tell its story (whenever you’re ready)</span>
+            <p className="mb-2 text-sm text-ink-soft">
+              Every item counts in your inventory, story or not. The story is the part only you can
+              tell — add it now, or come back to it anytime.
+            </p>
             <VoiceCapture
               onText={(text) => setStory((s) => (s ? `${s.trim()} ${text}` : text))}
             />
@@ -398,8 +423,9 @@ export function AddItem() {
   )
 }
 
-function StepDots({ step }: { step: Step }) {
-  const steps: Step[] = ['capture', 'identify', 'details']
+function StepDots({ step, showIdentify }: { step: Step; showIdentify: boolean }) {
+  // Real binders have no identification step — never show a phantom dot.
+  const steps: Step[] = showIdentify ? ['capture', 'identify', 'details'] : ['capture', 'details']
   const labels = { capture: 'Photo', identify: 'Our guess', details: 'Details' }
   const current = steps.indexOf(step)
   return (

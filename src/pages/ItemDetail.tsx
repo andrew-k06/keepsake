@@ -666,7 +666,7 @@ export function ItemDetail() {
             </div>
             {item.insured ? (
               <p className="mt-2 text-ink-soft">
-                You noted that this is insured.{' '}
+                Noted — this will show as insured on your printed inventory.{' '}
                 <button
                   onClick={() => updateItem(item.id, { insured: false })}
                   className="font-semibold text-clay-dark underline"
@@ -675,13 +675,20 @@ export function ItemDetail() {
                 </button>
               </p>
             ) : (
-              <div className="mt-2 flex flex-wrap gap-3">
+              <div className="mt-2">
                 <Button variant="secondary" onClick={() => updateItem(item.id, { insured: true })}>
                   I already have this insured
                 </Button>
-                <Button variant="ghost" onClick={() => setShowInsuranceInfo((s) => !s)}>
-                  What would insuring it involve?
-                </Button>
+                {/* Text link, not a twin button: the field test showed two
+                    side-by-side buttons let "read about it" feel like "did it". */}
+                <p className="mt-2">
+                  <button
+                    onClick={() => setShowInsuranceInfo((s) => !s)}
+                    className="inline-flex min-h-11 items-center py-1 text-sm font-semibold text-ink-soft underline hover:text-ink"
+                  >
+                    What would insuring it involve?
+                  </button>
+                </p>
               </div>
             )}
             {showInsuranceInfo && !item.insured && (

@@ -1,7 +1,7 @@
 # Keepsake — interactive prototype
 
 A warm, senior-first **digital heirloom binder**: aging homeowners photograph and archive their
-valuables, capture the *story* behind each one, record who they'd like each piece to go to, get
+valuables, capture the *stories* behind the ones that have them, record who they'd like each piece to go to, get
 appraisal guidance, and leave a practical "in an emergency" guide — a gift to pass on to their family.
 
 This is a **clickable preview** for walkthroughs. It runs entirely in the browser; data is saved
@@ -30,13 +30,16 @@ installable PWA (Add to Home Screen) and requests persistent storage.
 
 ## Walkthrough script (for a demo)
 
-1. **Welcome** (`/`) — two honest doors: **Start your own binder** (real onboarding, with an
-   "I'm setting it up for someone I love" gift path) or **See an example — Margaret's**.
+1. **Welcome** (`/`) — two honest doors: **Start your own binder** (real onboarding — both paths
+   open on Getting Ready, the guide that orients before the first item) or **See an example —
+   Margaret's** (its own storage slot; always pristine).
 2. **My Binder** — stories-first stats, rooms, recently added, 30-day "Recently removed" restore.
-3. **Add an item** (＋) — photo (compressed on-device, location metadata stripped) → the
-   **explainable suggestion card** (evidence sentence, confidence in words, a range never a number,
-   and an equal-weight "No — I'll tell you what it is") → details with **voice capture**: press,
-   talk, and the story writes itself (real Web Speech API).
+3. **Add an item** (＋) — photo (compressed on-device, location metadata stripped) → details with
+   **voice capture**: press, talk, and the story writes itself (real Web Speech API). The
+   **explainable suggestion card** (evidence sentence, confidence in words, an equal-weight "No —
+   I'll tell you what it is") demos **only inside Margaret's example binder** — a real photo never
+   receives a fabricated guess; real identification arrives with the vision model, and saying so
+   out loud is part of the pitch.
 4. **Item detail** — the story (editable, by voice too), family memories, facts, **"What it sells
    for today"** (sold-price range with receipts, trend in words, the kind-decline pattern),
    owner-attested insurance, and the **appraisal preflight** (why this tier, what it costs, who

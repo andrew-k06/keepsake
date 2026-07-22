@@ -22,8 +22,10 @@ export function Emergency() {
   const [label, setLabel] = useState('')
   const [labelError, setLabelError] = useState('')
   const [detail, setDetail] = useState('')
+  const [preparedOn, setPreparedOn] = useState('')
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editDetail, setEditDetail] = useState('')
+  const [editPreparedOn, setEditPreparedOn] = useState('')
 
   const startFromPrompt = (secId: string, p: string) => {
     setSectionId(secId)
@@ -38,18 +40,29 @@ export function Emergency() {
       setLabelError('Please give the note a short title so your family can find it.')
       return
     }
-    addEmergency({ label: label.trim(), detail, sectionId })
+    addEmergency({
+      label: label.trim(),
+      detail,
+      sectionId,
+      preparedOn: preparedOn.trim() || undefined,
+    })
     setLabel('')
     setDetail('')
+    setPreparedOn('')
     setAdding(false)
   }
 
-  const beginEdit = (id: string, currentDetail: string) => {
-    setEditingId(id)
-    setEditDetail(currentDetail)
+  const beginEdit = (e: EmergencyEntry) => {
+    setEditingId(e.id)
+    setEditDetail(e.detail)
+    setEditPreparedOn(e.preparedOn ?? '')
   }
   const saveEdit = () => {
-    if (editingId) updateEmergency(editingId, { detail: editDetail })
+    if (editingId)
+      updateEmergency(editingId, {
+        detail: editDetail,
+        preparedOn: editPreparedOn.trim() || undefined,
+      })
     setEditingId(null)
   }
 
@@ -67,7 +80,9 @@ export function Emergency() {
   const activeSection = sectionById(sectionId)
   const orphans = state.emergency.filter((e) => !sectionById(e.sectionId))
 
-  const NoteCard = ({ e }: { e: EmergencyEntry }) => (
+  const NoteCard = ({ e }: { e: EmergencyEntry }) => {
+    const sec = sectionById(e.sectionId)
+    return (
     <div className="flex gap-4 border-t border-line pt-4 first:border-0 first:pt-0">
       <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-cream-deep text-clay">
         <ScrollText className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
@@ -80,8 +95,22 @@ export function Emergency() {
               className={`${inputClass} min-h-24`}
               value={editDetail}
               onChange={(ev) => setEditDetail(ev.target.value)}
+              placeholder={sec?.detailPlaceholder}
               autoFocus
             />
+            {(sec?.asksPreparedOn || e.preparedOn) && (
+              <label className="mt-3 block">
+                <span className="mb-1 block text-sm font-semibold">
+                  When was it prepared or last updated? (optional)
+                </span>
+                <input
+                  className={inputClass}
+                  value={editPreparedOn}
+                  onChange={(ev) => setEditPreparedOn(ev.target.value)}
+                  placeholder="e.g. March 2023"
+                />
+              </label>
+            )}
             <div className="mt-3 flex justify-end gap-3">
               <Button variant="ghost" onClick={() => setEditingId(null)}>
                 Cancel
@@ -90,13 +119,18 @@ export function Emergency() {
             </div>
           </div>
         ) : (
-          <p className="text-ink-soft mt-1 leading-relaxed">{e.detail}</p>
+          <>
+            <p className="text-ink-soft mt-1 leading-relaxed">{e.detail}</p>
+            {e.preparedOn && (
+              <p className="mt-1 text-sm text-ink-soft">Prepared/updated: {e.preparedOn}</p>
+            )}
+          </>
         )}
       </div>
       {editingId !== e.id && (
         <div className="flex shrink-0 flex-col items-end gap-1">
           <button
-            onClick={() => beginEdit(e.id, e.detail)}
+            onClick={() => beginEdit(e)}
             className="inline-flex min-h-11 items-center gap-1 px-2 py-2 text-sm font-semibold text-ink-soft hover:text-ink"
           >
             <Pencil className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
@@ -112,7 +146,8 @@ export function Emergency() {
         </div>
       )}
     </div>
-  )
+    )
+  }
 
   return (
     <div>
@@ -161,14 +196,32 @@ export function Emergency() {
             />
           </Field>
           <Field
-            label="Details"
+            label={activeSection?.detailLabel ?? 'Details'}
             hint={
               activeSection?.safety ??
               'Say where things are in words your family understands — there’s no need to write down key locations or codes.'
             }
           >
-            <textarea className={`${inputClass} min-h-28`} value={detail} onChange={(e) => setDetail(e.target.value)} />
+            <textarea
+              className={`${inputClass} min-h-28`}
+              value={detail}
+              onChange={(e) => setDetail(e.target.value)}
+              placeholder={activeSection?.detailPlaceholder}
+            />
           </Field>
+          {activeSection?.asksPreparedOn && (
+            <Field
+              label="When was it prepared or last updated? (optional)"
+              hint="A rough date is fine — like “March 2023”. Laws change, and so do situations, so it helps your family to know how current a document is."
+            >
+              <input
+                className={inputClass}
+                value={preparedOn}
+                onChange={(e) => setPreparedOn(e.target.value)}
+                placeholder="e.g. March 2023"
+              />
+            </Field>
+          )}
           <div className="mt-4 flex justify-end gap-3">
             <Button variant="ghost" onClick={() => setAdding(false)}>
               Cancel

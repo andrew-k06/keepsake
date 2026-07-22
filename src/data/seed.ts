@@ -235,6 +235,23 @@ export const seedState: BinderState = {
       ],
     },
     {
+      id: 'i-table',
+      name: 'The Kitchen Table',
+      category: 'Furniture',
+      roomId: 'living',
+      story:
+        'Robert built it the year we married, from planks his father milled. Every Thanksgiving, every homework battle, every hard conversation this family ever had happened at this table.',
+      significance:
+        'It’s worth almost nothing and it’s the most valuable thing in the house. If the children learn one thing from this binder, let it be that.',
+      valuations: [],
+      acquired: '1965 (homemade)',
+      condition: 'Worn exactly right',
+      appraisalStatus: 'none',
+      documents: [],
+      insured: false,
+      createdAt: '2026-06-30T00:00:00.000Z',
+    },
+    {
       id: 'i-coins',
       name: 'Silver Dollar Collection',
       category: 'Coins',

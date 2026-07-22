@@ -96,7 +96,7 @@ export function PrintBinder() {
             <TocLine
               title="Still being decided"
               sub="a lovely reason to ask"
-              right={`${unassigned.length} item${unassigned.length === 1 ? '' : 's'}`}
+              right={`${unassigned.length} treasure${unassigned.length === 1 ? '' : 's'}`}
             />
           )}
           {state.emergency.length > 0 && (
@@ -163,6 +163,12 @@ export function PrintBinder() {
           <p className="mt-2 text-ink-soft">
             The practical things {state.ownerName} wanted you to know — so you always know what to do.
           </p>
+          <p className="mt-2 text-ink-soft">
+            A note for the family: papers like a power of attorney or health care directive help only
+            when copies are already in the hands of the people named in them. If you’re named in one
+            and don’t hold your copy, the kindest time to ask where it lives is now, while everyone
+            is well.
+          </p>
           <div className="mt-6 space-y-6">
             {EMERGENCY_SECTIONS.map((sec) => {
               const notes = state.emergency.filter((e) => e.sectionId === sec.id)
@@ -177,6 +183,9 @@ export function PrintBinder() {
                       <div key={e.id}>
                         <h3 className="font-serif text-xl">{e.label}</h3>
                         <p className="mt-1 leading-relaxed text-ink-soft">{e.detail}</p>
+                        {e.preparedOn && (
+                          <p className="mt-0.5 text-sm text-ink-soft">Prepared/updated: {e.preparedOn}</p>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -189,6 +198,9 @@ export function PrintBinder() {
                 <div key={e.id} className="print-avoid-break">
                   <h3 className="font-serif text-xl">{e.label}</h3>
                   <p className="mt-1 leading-relaxed text-ink-soft">{e.detail}</p>
+                  {e.preparedOn && (
+                    <p className="mt-0.5 text-sm text-ink-soft">Prepared/updated: {e.preparedOn}</p>
+                  )}
                 </div>
               ))}
           </div>

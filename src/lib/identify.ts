@@ -5,14 +5,18 @@
 // ask for the disambiguating photo, and always yield the last word to the
 // user with an equal-weight "No, let me tell you what it is."
 //
-// In this preview the suggestions are examples (and the UI says so); the full
-// app swaps this module for a Claude vision call returning the same shape.
+// INVARIANT: these canned examples render ONLY in the seeded example binder
+// (state.isDemo). A real user's photo must never receive a fabricated
+// identification — the label does not immunize wrong output (field test #1).
+// The full app swaps this module for a Claude vision call of the same shape.
 
 export interface IdSuggestion {
   name: string
   category: string
-  low: number
-  high: number
+  /** Sold-price range. ABSENT when the honest answer is "no market guess" —
+      ordinary furniture and personal pieces deserve a shrug, not a number. */
+  low?: number
+  high?: number
   /** What the eye caught: "a gold band with a single clear stone…" */
   evidence: string
   confidence: 'guessing' | 'fairly sure'
@@ -21,6 +25,20 @@ export interface IdSuggestion {
 }
 
 const EXAMPLES: IdSuggestion[] = [
+  {
+    name: 'Upholstered Sofa',
+    category: 'Furniture',
+    evidence: 'a well-used upholstered sofa — comfortable, personal, and honestly not a market piece',
+    confidence: 'fairly sure',
+    followUp: 'nothing — for a piece like this, the story is worth more than any price guess',
+  },
+  {
+    name: 'Carved Wooden Mask',
+    category: 'Décor & Cultural Pieces',
+    evidence: 'hand-carved wood with tool marks — pieces like this vary enormously by maker and origin',
+    confidence: 'guessing',
+    followUp: 'the back and any gallery or collection labels, which tell the real story',
+  },
   {
     name: 'Diamond Ring',
     category: 'Jewelry',

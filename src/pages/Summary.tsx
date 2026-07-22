@@ -102,7 +102,7 @@ export function Summary() {
           className="inline-flex min-h-11 items-center gap-1.5 py-2 font-semibold text-clay-dark underline hover:text-ink"
         >
           <FileText className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden="true" />
-          Inventory for estate & insurance professionals
+          Inventory for estate attorneys, CPAs & insurance
         </Link>
       </div>
 

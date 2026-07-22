@@ -43,16 +43,8 @@ export function Layout({ children }: { children: ReactNode }) {
     const hadOwn = await exitExample()
     navigate(hadOwn ? '/binder' : '/start')
   }
-  // Full-bleed screens (welcome, onboarding, printable documents) get no chrome.
-  if (
-    location.pathname === '/' ||
-    location.pathname === '/start' ||
-    location.pathname.startsWith('/print')
-  )
-    return <>{children}</>
-
-  return (
-    <div className="min-h-full md:flex">
+  const banners = (
+    <>
       {saveError && (
         <div
           role="alert"
@@ -66,7 +58,7 @@ export function Layout({ children }: { children: ReactNode }) {
           role="alert"
           className="print-hidden fixed inset-x-0 top-0 z-50 flex items-center justify-center gap-3 border-b-2 border-amber-deep bg-amber/15 px-5 py-3 font-semibold text-amber-deep backdrop-blur"
         >
-          <span>This binder was changed in another window.</span>
+          <span>This binder was changed in another window — this window is paused.</span>
           <button
             onClick={() => window.location.reload()}
             className="rounded-xl border-2 border-amber-deep px-3 py-1 hover:bg-amber/20"
@@ -75,6 +67,24 @@ export function Layout({ children }: { children: ReactNode }) {
           </button>
         </div>
       )}
+    </>
+  )
+
+  // Full-bleed screens get no chrome — but the print pages MUST still show
+  // the save/stale banners (the field test printed a report from the one
+  // screen that couldn't warn her). Welcome/onboarding stay bare.
+  if (location.pathname.startsWith('/print'))
+    return (
+      <>
+        {banners}
+        {children}
+      </>
+    )
+  if (location.pathname === '/' || location.pathname === '/start') return <>{children}</>
+
+  return (
+    <div className="min-h-full md:flex">
+      {banners}
       {/* Sidebar (desktop) */}
       <aside className="hidden md:flex w-72 shrink-0 flex-col border-r border-line bg-white/70 backdrop-blur-sm p-5">
         <Brand />

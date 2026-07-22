@@ -46,9 +46,11 @@ export function Start() {
       return
     }
     startFresh(name, mode === 'gift' && giverName.trim() ? { giftFrom: giverName } : undefined)
-    // A gifted binder opens on the path: the child's onboarding IS chapter one,
-    // in together mode, with the script in hand.
-    navigate(mode === 'gift' ? '/guide' : '/add')
+    // Both paths open on Getting Ready: the guide IS the orientation (field
+    // test #1 — entering the binder cold left the concept unclear; the guide
+    // made it click). Momentum survives: the guide's one card is a single
+    // "Let's do it" from the add form.
+    navigate('/guide')
   }
 
   return (

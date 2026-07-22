@@ -103,6 +103,10 @@ export interface EmergencyEntry {
   /** Which chapter of the guide this belongs to (lib/emergency.ts sections).
       Absent on older notes — they display under "Other notes". */
   sectionId?: string
+  /** Free-text date the underlying document was prepared or last updated
+      ("March 2023"). Optional; asked only in sections holding dated legal
+      papers. Never parsed — never used for reminders (no-nagging rule). */
+  preparedOn?: string
 }
 
 /** One line in the binder's activity record. Backs the privacy promise
@@ -182,5 +186,7 @@ export const CATEGORIES = [
   'Coins',
   'Antiques',
   'Instruments',
+  'Rugs & Textiles',
+  'Décor & Cultural Pieces',
   'Other',
 ] as const

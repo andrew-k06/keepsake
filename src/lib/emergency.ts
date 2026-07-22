@@ -11,6 +11,12 @@ export interface EmergencySection {
   sub: string
   /** Shown as a quiet rule inside the section's add-flow when present. */
   safety?: string
+  /** Label for the note's free-text field. Defaults to "Details". */
+  detailLabel?: string
+  /** Placeholder shown inside the textarea — tells the user what to write. */
+  detailPlaceholder?: string
+  /** Ask when the underlying document was prepared (legal-paper sections only). */
+  asksPreparedOn?: boolean
   /** Prompt chips — the questions a family actually asks. */
   prompts: string[]
 }
@@ -20,6 +26,11 @@ export const EMERGENCY_SECTIONS: EmergencySection[] = [
     id: 'health',
     title: 'My health & care',
     sub: 'The papers and people that speak for you if you can’t.',
+    safety:
+      'A health care directive or power of attorney only works if it’s in hand when the moment comes — the people named in these papers are usually given their own copies right away, not access later.',
+    detailLabel: 'Where it’s located & who has copies',
+    detailPlaceholder: 'Where is it? Who has copies? Who is named in it?',
+    asksPreparedOn: true,
     prompts: [
       'My health care directive & who speaks for me',
       'Power of attorney for finances — who & where',
@@ -31,6 +42,7 @@ export const EMERGENCY_SECTIONS: EmergencySection[] = [
     id: 'final',
     title: 'Final arrangements',
     sub: 'Your wishes, written down — so no one has to guess at the hardest moment.',
+    detailPlaceholder: 'Write your wishes in your own words — plain is perfect.',
     prompts: [
       'Organ or body donation',
       'Burial or cremation — what I’d like',
@@ -43,6 +55,11 @@ export const EMERGENCY_SECTIONS: EmergencySection[] = [
     id: 'papers',
     title: 'Papers & legal',
     sub: 'Where the important papers live and who can reach them.',
+    safety:
+      'A note about where a paper lives isn’t the same as being able to reach it. If the only copy sits in a safe-deposit box no one else can open, no one can get to it when it matters — many people keep copies with the people named in them, and make sure someone else can open the box.',
+    detailLabel: 'Where it’s located & who has copies',
+    detailPlaceholder: 'Where is it kept? Who has the original? Who has copies?',
+    asksPreparedOn: true,
     prompts: [
       'Where my will is & who has the original',
       'My attorney',
@@ -56,6 +73,7 @@ export const EMERGENCY_SECTIONS: EmergencySection[] = [
     title: 'Money & accounts',
     sub: 'The names of the places, so nothing gets lost or forgotten.',
     safety: 'Names of institutions only — never write account numbers or balances here.',
+    detailPlaceholder: 'The name of the place and who to ask — never account numbers.',
     prompts: [
       'Banks & brokerages (names only)',
       'Retirement, pensions & Social Security',
@@ -70,12 +88,15 @@ export const EMERGENCY_SECTIONS: EmergencySection[] = [
     sub: 'How your family would get in — described safely.',
     safety:
       'Describe where things live in words your family understands — never write the actual codes, combinations, or passwords.',
+    detailLabel: 'Where it’s located & who has copies',
+    detailPlaceholder: 'Describe the spot in words — “the small notebook in the top desk drawer” — never the code itself.',
     prompts: ['Where my password list lives', 'Safe-deposit box — where & who can open it'],
   },
   {
     id: 'home',
     title: 'Home & everyday',
     sub: 'The house should never be a mystery to the people helping.',
+    detailPlaceholder: 'Where is it, and what should someone helping know or do?',
     prompts: [
       'Water, gas & power shut-offs',
       'Service providers (plumber, furnace, yard)',
@@ -87,6 +108,7 @@ export const EMERGENCY_SECTIONS: EmergencySection[] = [
     id: 'memory',
     title: 'Photographs & family history',
     sub: 'Where the memories live — the albums, the files, the family tree.',
+    detailPlaceholder: 'Where do they live, and who should know about them?',
     prompts: [
       'Where the family photographs live',
       'Heirlooms & genealogy records',

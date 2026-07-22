@@ -83,6 +83,16 @@ const PROFILES: Record<string, Profile> = {
     changePct: 0,
     context: 'Collectible prices depend a great deal on the exact piece and its condition.',
   },
+  'Rugs & Textiles': {
+    changePct: -15,
+    context:
+      'Hand-made rugs and textiles have softened with changing tastes — though fine older pieces still find devoted buyers.',
+  },
+  'Décor & Cultural Pieces': {
+    changePct: 0,
+    context:
+      'Value varies widely with the maker and the piece’s history — the story you keep with it does real work here.',
+  },
   Other: {
     changePct: 0,
     context: 'Prices for pieces like this vary — condition and maker matter most.',

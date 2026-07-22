@@ -73,7 +73,7 @@ export function Plan() {
           </div>
           <p className="mt-1 text-3xl font-semibold">Free</p>
           <ul className="mt-4 space-y-2 text-ink-soft">
-            <Feature>Up to {STARTER_ITEM_LIMIT} items with stories</Feature>
+            <Feature>Up to {STARTER_ITEM_LIMIT} items, each with room for its story</Feature>
             <Feature>The “In an emergency” guide</Feature>
             <Feature>Family members &amp; wishes</Feature>
           </ul>

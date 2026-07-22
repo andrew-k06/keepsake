@@ -60,6 +60,10 @@ test('fresh binder: add, persist, edit details, rooms, search', async ({ page })
   await page.getByRole('radio', { name: 'It’s for me' }).click()
   await page.getByPlaceholder('Margaret').fill('Harold')
   await page.getByRole('button', { name: 'Create my binder' }).click()
+  // Onboarding lands on Getting Ready — the orientation IS the guide (field
+  // test #1); momentum survives as one click into the add form.
+  await expect(page.locator('h1')).toHaveText('Getting Ready')
+  await page.getByRole('button', { name: 'Let’s do it' }).click()
   await expect(page.locator('h1')).toHaveText('Add something precious')
 
   // Skip photo → blank details (never a fabricated identification)
@@ -112,7 +116,7 @@ test('the example binder is recoverable and never clobbers the user’s data', a
   await page.getByRole('radio', { name: 'It’s for me' }).click()
   await page.getByPlaceholder('Margaret').fill('Harold')
   await page.getByRole('button', { name: 'Create my binder' }).click()
-  await expect(page.locator('h1')).toHaveText('Add something precious')
+  await expect(page.locator('h1')).toHaveText('Getting Ready')
 
   // …open the example…
   await page.goto('#/')
@@ -165,6 +169,83 @@ test('backup export downloads a complete JSON file', async ({ page }) => {
   expect(parsed.binderName).toBe("Margaret's Binder")
   expect(Array.isArray(parsed.items)).toBe(true)
   expect(Array.isArray(parsed._diagnostics)).toBe(true)
+  expect(errors).toEqual([])
+})
+
+test('a real photo never receives a fabricated identification', async ({ page }) => {
+  const errors = errorsOf(page)
+  await page.goto('#/start')
+  await page.getByRole('radio', { name: 'It’s for me' }).click()
+  await page.getByPlaceholder('Margaret').fill('Ruth')
+  await page.getByRole('button', { name: 'Create my binder' }).click()
+  await page.getByRole('button', { name: 'Let’s do it' }).click()
+  await expect(page.locator('h1')).toHaveText('Add something precious')
+
+  // Upload a real photo: straight to details — no "Our guess" step, no canned
+  // suggestion, and the honest note about the future feature instead.
+  const png = Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAFElEQVR4nGNgYGD4z4AGmNAFBpcgAKKBAQXKr8mVAAAAAElFTkSuQmCC',
+    'base64',
+  )
+  await page.locator('input[type=file]').setInputFiles({
+    name: 'sofa.png',
+    mimeType: 'image/png',
+    buffer: png,
+  })
+  await expect(page.getByText('What is it?')).toBeVisible()
+  await expect(page.getByText(/This looks like a/)).not.toBeVisible()
+  await expect(page.getByText('Our guess')).not.toBeVisible()
+  await expect(page.getByText('your words are better than any guess')).toBeVisible()
+  expect(errors).toEqual([])
+})
+
+test('the example binder still demos the explainable identification', async ({ page }) => {
+  const errors = errorsOf(page)
+  await page.goto('#/add') // fresh context boots into Margaret's example
+  const png = Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAFElEQVR4nGNgYGD4z4AGmNAFBpcgAKKBAQXKr8mVAAAAAElFTkSuQmCC',
+    'base64',
+  )
+  await page.locator('input[type=file]').setInputFiles({
+    name: 'demo.png',
+    mimeType: 'image/png',
+    buffer: png,
+  })
+  await expect(page.getByText(/fairly sure|guessing here/)).toBeVisible({ timeout: 8000 })
+  await expect(page.getByText(/Preview — an example/)).toBeVisible()
+  expect(errors).toEqual([])
+})
+
+test('insured attestation survives reload and prints truthfully everywhere', async ({ page }) => {
+  const errors = errorsOf(page)
+  // Fresh binder with one item
+  await page.goto('#/start')
+  await page.getByRole('radio', { name: 'It’s for me' }).click()
+  await page.getByPlaceholder('Margaret').fill('Ruth')
+  await page.getByRole('button', { name: 'Create my binder' }).click()
+  await page.getByRole('button', { name: 'Let’s do it' }).click()
+  await page.getByRole('button', { name: /add a photo later/ }).click()
+  await page.locator('input').first().fill('Dish cabinet')
+  await page.getByRole('button', { name: 'Save to my binder' }).click()
+  await expect(page.locator('h1')).toHaveText('Dish cabinet')
+
+  // Attest insurance; explicit confirmation names the printed inventory
+  await page.getByRole('button', { name: 'I already have this insured' }).click()
+  await expect(page.getByText('this will show as insured on your printed inventory')).toBeVisible()
+
+  // Survives a full reload (read-back from IndexedDB)…
+  await page.reload()
+  await expect(page.getByText('this will show as insured on your printed inventory')).toBeVisible()
+
+  // …and the professional inventory tells the same truth (her exact check)
+  await page.goto('#/print/inventory')
+  await expect(page.locator('tr', { hasText: 'Dish cabinet' })).toContainText('Yes (owner-stated)')
+
+  // The attorney memorandum lists the undesignated item in its appendix
+  await page.goto('#/print/memo')
+  await expect(page.getByRole('heading', { name: /Appendix — items not designated/ })).toBeVisible()
+  await expect(page.getByText('does not give these items to anyone')).toBeVisible()
+  await expect(page.getByText('Dish cabinet')).toBeVisible()
   expect(errors).toEqual([])
 })
 

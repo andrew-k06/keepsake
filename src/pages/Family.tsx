@@ -84,7 +84,7 @@ export function Family() {
         <div>
           <h1 className="text-4xl">Family & loved ones</h1>
           <p className="text-ink-soft mt-1 text-lg">
-            Add the people you trust, so you can assign keepsakes and print a summary for them.
+            Add the people you trust, so you can decide who each treasure goes to and print a summary for them.
           </p>
         </div>
         <Button icon={UserPlus} onClick={() => setShowInvite((s) => !s)}>
@@ -215,6 +215,13 @@ export function Family() {
             only through that careful process.
           </p>
         )}
+        <p className="mt-3 text-ink-soft">
+          <span className="font-semibold text-ink">One thing this careful process can’t do:</span> a
+          power of attorney or health care directive is needed in hours, not days — no waiting period
+          is short enough. Papers like those work when the people named in them already hold their
+          own copies, given while everyone is well. The binder’s access rules are for everything else
+          in here.
+        </p>
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <label className="sr-only" htmlFor="trusted-select">
             Trusted contact
@@ -265,7 +272,8 @@ export function Family() {
         </div>
         <p className="mt-3 text-sm text-ink-soft">
           This names a contact inside Keepsake only — it doesn’t make anyone your legal executor.
-          That comes from your will; your attorney is the right person to ask.
+          That comes from your will; your attorney is the right person to ask — including who should
+          hold copies of your power of attorney and health care directive today.
         </p>
       </Card>
 

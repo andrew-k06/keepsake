@@ -16,6 +16,15 @@ export interface BinderRepository {
   save(state: BinderState, slot?: BinderSlot): Promise<void>
 }
 
+/** Thrown when another tab/window has saved a newer revision — the caller
+    must stop writing and offer a reload. Kills last-writer-wins clobbering. */
+export class StaleWriteError extends Error {
+  constructor() {
+    super('A newer revision of the binder exists in storage.')
+    this.name = 'StaleWriteError'
+  }
+}
+
 const DB_NAME = 'keepsake'
 const STORE = 'binders'
 const PHOTO_STORE = 'photos'
@@ -220,6 +229,8 @@ function openDb(): Promise<IDBDatabase> {
 
 class IndexedDbRepository implements BinderRepository {
   private db: Promise<IDBDatabase>
+  /** Last revision this tab loaded or wrote, per slot (CAS token). */
+  private rev: Record<string, number> = {}
 
   constructor() {
     this.db = sharedDb()
@@ -233,7 +244,10 @@ class IndexedDbRepository implements BinderRepository {
       req.onsuccess = () => resolve(req.result)
       req.onerror = () => reject(req.error)
     })
-    if (stored) return migrate(stored)
+    if (stored) {
+      this.rev[slot] = (stored as { _rev?: number })._rev ?? 0
+      return migrate(stored)
+    }
 
     // First run on this adapter: import any binder saved by earlier builds
     // (they predate slots, so legacy data belongs to 'main').
@@ -260,10 +274,28 @@ class IndexedDbRepository implements BinderRepository {
     const db = await this.db
     await new Promise<void>((resolve, reject) => {
       const tx = db.transaction(STORE, 'readwrite')
-      tx.objectStore(STORE).put(state, slot)
+      const store = tx.objectStore(STORE)
+      // Compare-and-swap within the transaction: if storage holds a newer
+      // revision than this tab last saw, another window wrote — refuse.
+      const getReq = store.get(slot)
+      getReq.onsuccess = () => {
+        const storedRev = (getReq.result as { _rev?: number } | undefined)?._rev ?? 0
+        const myRev = this.rev[slot] ?? 0
+        if (storedRev > myRev) {
+          tx.abort()
+          reject(new StaleWriteError())
+          return
+        }
+        const nextRev = storedRev + 1
+        store.put({ ...state, _rev: nextRev }, slot)
+        this.rev[slot] = nextRev
+      }
       tx.oncomplete = () => resolve()
       tx.onerror = () => reject(tx.error ?? new Error('save failed'))
-      tx.onabort = () => reject(tx.error ?? new Error('save aborted'))
+      tx.onabort = () => {
+        /* reject already called for stale writes; other aborts: */
+        reject(tx.error ?? new StaleWriteError())
+      }
     })
   }
 }

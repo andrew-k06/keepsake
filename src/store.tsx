@@ -12,7 +12,7 @@ import type {
   Room,
 } from './types'
 import { seedState } from './data/seed'
-import { createRepository, externalizePhotos, photoStore, photoStoreAvailable } from './data/repository'
+import { createRepository, externalizePhotos, photoStore, photoStoreAvailable, StaleWriteError } from './data/repository'
 import { STEPS, stepDone, emptyPreparedness } from './lib/prepare'
 
 const TRASH_DAYS = 30
@@ -207,8 +207,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   // guard keeps a slow, early save from clearing (or raising) a banner that
   // belongs to a newer save — matters under the localStorage fallback.
   const saveSeq = useRef(0)
+  const savedSeq = useRef(0)
   const latestState = useRef<BinderState | null>(null)
   const [otherTabWrote, setOtherTabWrote] = useState(false)
+  const otherTabWroteRef = useRef(false)
+  const markSuperseded = () => {
+    otherTabWroteRef.current = true
+    setOtherTabWrote(true)
+  }
   const tabId = useRef(Math.random().toString(36).slice(2))
   const channel = useRef<BroadcastChannel | null>(null)
   useEffect(() => {
@@ -216,21 +222,30 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     const ch = new BroadcastChannel('keepsake-binder')
     channel.current = ch
     ch.onmessage = (e) => {
-      if (e.data?.tab && e.data.tab !== tabId.current) setOtherTabWrote(true)
+      if (e.data?.tab && e.data.tab !== tabId.current) markSuperseded()
     }
     return () => ch.close()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
   useEffect(() => {
     if (!state) return
     latestState.current = state
+    // A superseded window must stop writing: another tab holds the truth.
+    if (otherTabWroteRef.current) return
     const seq = ++saveSeq.current
     repo.current!
       .save(state, activeSlot.current)
       .then(() => {
+        savedSeq.current = Math.max(savedSeq.current, seq)
         if (seq === saveSeq.current) setSaveError(null)
         channel.current?.postMessage({ tab: tabId.current })
       })
-      .catch(() => {
+      .catch((err) => {
+        if (err instanceof StaleWriteError) {
+          // Another window saved a newer revision — freeze this one.
+          markSuperseded()
+          return
+        }
         if (seq === saveSeq.current)
           setSaveError(
             'We could not save your latest change on this device — its storage may be full. Your binder is still open; please free some space, then make a small change to save again.',
@@ -238,18 +253,27 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       })
   }, [state])
 
-  // Best-effort flush when the tab is hidden or closing: a save already in
-  // flight may not finish, so fire one more with the latest state.
+  // Best-effort flush when the tab is hidden or closing — but ONLY when this
+  // tab actually has unsaved changes, and never once superseded. An
+  // unconditional flush re-saved a STALE snapshot when an untouched window
+  // closed, silently reverting edits made in another window (found by the
+  // first ICP field test: two of three insured flags vanished).
   useEffect(() => {
     const flush = () => {
+      if (otherTabWroteRef.current) return
+      if (saveSeq.current === savedSeq.current) return // nothing unsaved here
       if (latestState.current)
         void repo.current!.save(latestState.current, activeSlot.current).catch(() => {})
     }
-    window.addEventListener('pagehide', flush)
-    document.addEventListener('visibilitychange', () => {
+    const onVisibility = () => {
       if (document.visibilityState === 'hidden') flush()
-    })
-    return () => window.removeEventListener('pagehide', flush)
+    }
+    window.addEventListener('pagehide', flush)
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => {
+      window.removeEventListener('pagehide', flush)
+      document.removeEventListener('visibilitychange', onVisibility)
+    }
   }, [])
 
   const api = useMemo<StoreApi | null>(() => {

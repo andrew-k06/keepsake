@@ -15,6 +15,7 @@ import type { Item } from '../types'
 import {
   Plus,
   Quote,
+  Compass,
   HeartHandshake,
   BookHeart,
   Users,
@@ -28,6 +29,7 @@ import {
 
 type ViewMode = 'tile' | 'list'
 const VIEW_KEY = 'keepsake.recentView'
+const ORIENT_KEY = 'keepsake.orientationSeen'
 
 export function Home() {
   const { state, itemsInRoom, restoreItem, addRoom } = useStore()
@@ -39,6 +41,13 @@ export function Home() {
   )
   const [query, setQuery] = useState('')
   const [showAll, setShowAll] = useState(false)
+  const [showOrientation, setShowOrientation] = useState(
+    () => localStorage.getItem(ORIENT_KEY) !== '1',
+  )
+  const dismissOrientation = () => {
+    localStorage.setItem(ORIENT_KEY, '1')
+    setShowOrientation(false)
+  }
   const q = query.trim().toLowerCase()
   const matches = q
     ? state.items.filter((it) =>
@@ -90,6 +99,36 @@ export function Home() {
         </Card>
       )}
 
+      {/* First-visit orientation — the concept in one card (field test #1:
+          entering My Binder cold left "what am I producing?" unanswered) */}
+      {showOrientation && !state.isDemo && !(state.plan.giftFrom && state.items.length === 0) && (
+        <Card className="mt-6 flex items-start gap-4 border-sage/30 bg-sage/5 p-6">
+          <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-sage/15 text-sage-deep">
+            <Compass className="h-6 w-6" strokeWidth={2} aria-hidden="true" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-lg font-semibold">What you’re making here</p>
+            <p className="mt-1 text-ink-soft">
+              A binder of the things you care about — a photo and a name for each, the story behind
+              the ones that have one, and your wish for who you’d like to have it. Piece by piece, it
+              becomes a book your family can hold onto. The Getting Ready page walks you through it,
+              one small visit at a time.
+            </p>
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <Button variant="secondary" icon={Compass} onClick={() => navigate('/guide')}>
+                Show me the path
+              </Button>
+              <button
+                onClick={dismissOrientation}
+                className="inline-flex min-h-11 items-center px-2 py-2 font-semibold text-ink-soft underline hover:text-ink"
+              >
+                Got it, thanks
+              </button>
+            </div>
+          </div>
+        </Card>
+      )}
+
       {/* Stats — stories and wishes lead; money never headlines the binder */}
       <div className="mt-8 grid gap-4 sm:grid-cols-3">
         <Stat
@@ -108,6 +147,36 @@ export function Home() {
           value={`${withHeir} of ${state.items.length}`}
         />
       </div>
+
+      {/* Getting Ready — the one next step, ABOVE the fold (field test #1:
+          "See the whole path" was buried). Persists as the mobile door to the
+          Guide even after the core path completes. */}
+      {(() => {
+        const progress = prepareProgress(state)
+        if (progress.nextStep) {
+          return (
+            <div className="mt-8">
+              <NextStepCard step={progress.nextStep} compact />
+              <Link
+                to="/guide"
+                className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-full border-2 border-sage/40 bg-sage/10 px-4 py-2 font-semibold text-sage-deep hover:border-sage"
+              >
+                <Compass className="h-5 w-5 shrink-0" strokeWidth={2} aria-hidden="true" />
+                See the whole path
+              </Link>
+            </div>
+          )
+        }
+        return (
+          <Link
+            to="/guide"
+            className="mt-8 inline-flex min-h-11 items-center gap-2 rounded-full border-2 border-sage/40 bg-sage/10 px-4 py-2 font-semibold text-sage-deep hover:border-sage"
+          >
+            <Compass className="h-5 w-5 shrink-0" strokeWidth={2} aria-hidden="true" />
+            Getting Ready — complete. Open your path anytime.
+          </Link>
+        )
+      })()}
 
       {/* Rooms */}
       <div className="mt-12 flex items-center justify-between gap-4">
@@ -218,7 +287,8 @@ export function Home() {
           </span>
           <p className="mt-4 text-lg font-semibold">Your binder is ready.</p>
           <p className="text-ink-soft mt-1">
-            Add your first keepsake to begin telling its story.
+            Add your first treasure — a photo and a name is all it takes. Its story can come whenever
+            you’re ready.
           </p>
           <div className="mt-5 flex justify-center">
             <Button icon={Plus} onClick={() => navigate('/add')}>
@@ -239,34 +309,6 @@ export function Home() {
           ))}
         </div>
       )}
-
-      {/* Getting Ready — the one next step. This card is the mobile door to
-          the Guide, so it persists even after the core path completes (the
-          ongoing chapter, celebrations, and Together mode still live there). */}
-      {(() => {
-        const progress = prepareProgress(state)
-        if (progress.nextStep) {
-          return (
-            <div className="mt-12">
-              <NextStepCard step={progress.nextStep} compact />
-              <Link
-                to="/guide"
-                className="mt-2 inline-flex min-h-11 items-center gap-1 py-1 text-sm font-semibold text-sage-deep underline hover:text-ink"
-              >
-                See the whole path
-              </Link>
-            </div>
-          )
-        }
-        return (
-          <Link
-            to="/guide"
-            className="mt-12 inline-flex min-h-11 items-center gap-2 rounded-full border-2 border-sage/40 bg-sage/10 px-4 py-2 font-semibold text-sage-deep hover:border-sage"
-          >
-            Getting Ready — complete. Open your path anytime.
-          </Link>
-        )
-      })()}
 
       {/* Recently removed — mistakes aren't forever */}
       {trash.length > 0 && (
