@@ -100,19 +100,26 @@ export function Home() {
       )}
 
       {/* First-visit orientation — the concept in one card (field test #1:
-          entering My Binder cold left "what am I producing?" unanswered) */}
-      {showOrientation && !state.isDemo && !(state.plan.giftFrom && state.items.length === 0) && (
+          entering My Binder cold left "what am I producing?" unanswered).
+          Shows in the example binder too: the default boot state IS the demo,
+          and that's exactly where a first-time visitor wanders unoriented. */}
+      {showOrientation && !(state.plan.giftFrom && state.items.length === 0) && (
         <Card className="mt-6 flex items-start gap-4 border-sage/30 bg-sage/5 p-6">
           <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-sage/15 text-sage-deep">
             <Compass className="h-6 w-6" strokeWidth={2} aria-hidden="true" />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="text-lg font-semibold">What you’re making here</p>
+            <p className="text-lg font-semibold">
+              {state.isDemo ? 'What Keepsake is' : 'What you’re making here'}
+            </p>
             <p className="mt-1 text-ink-soft">
-              A binder of the things you care about — a photo and a name for each, the story behind
-              the ones that have one, and your wish for who you’d like to have it. Piece by piece, it
-              becomes a book your family can hold onto. The Getting Ready page walks you through it,
-              one small visit at a time.
+              {state.isDemo ? 'This binder is a finished example. ' : ''}
+              Keepsake is a gentle way to get your affairs in order, starting with the things you
+              love: a photo and a name for each treasure, the story behind it, your wish for who
+              should have it, and the practical notes your family would need in an emergency. It all
+              prints into a book they can hold — so no one ever has to guess.{' '}
+              <span className="font-semibold text-ink">Getting Ready</span> is the guided path that
+              walks you through it, one small visit at a time.
             </p>
             <div className="mt-4 flex flex-wrap items-center gap-3">
               <Button variant="secondary" icon={Compass} onClick={() => navigate('/guide')}>

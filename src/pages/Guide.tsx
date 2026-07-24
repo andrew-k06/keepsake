@@ -46,8 +46,9 @@ export function Guide() {
         ) : (
           <>Welcome, {state.ownerName}. </>
         )}
-        “Getting your affairs in order” sounds enormous — it’s really a handful of small visits, at
-        your pace, and you’ve {progress.doneCount > 0 ? 'already done some of it' : 'got a gentle place to start'}.
+        Getting Ready is Keepsake’s guided path: it turns “getting your affairs in order” — which
+        sounds enormous — into a handful of small visits, at your pace, and you’ve{' '}
+        {progress.doneCount > 0 ? 'already done some of it' : 'got a gentle place to start'}.
       </p>
 
       {/* Words, not percentages */}

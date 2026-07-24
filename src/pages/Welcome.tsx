@@ -42,8 +42,13 @@ export function Welcome() {
         </h1>
 
         <p className="mt-6 max-w-xl text-xl text-ink-soft">
-          Keepsake helps you gather your treasured belongings, their stories, and your wishes — into
-          one binder you can pass on to the people you love.
+          Keepsake is a gentle way to get your affairs in order — starting with the things you love.
+          Photograph each treasure, tell its story in your own words, write down who you’d like to
+          have it, and keep the practical notes your family would need in an emergency.
+        </p>
+        <p className="mt-4 max-w-xl text-lg text-ink-soft">
+          Why it helps: your family never has to guess what mattered or who it was meant for — and
+          it all prints into a book they can hold.
         </p>
 
         <div className="mt-10 flex flex-col gap-4 sm:flex-row">
@@ -84,7 +89,12 @@ export function Welcome() {
           </div>
         </div>
 
-        <p className="mt-16 inline-flex max-w-xl items-center gap-2 text-sm text-ink-soft">
+        <p className="mt-8 max-w-xl text-ink-soft">
+          Inside, a guided path called <span className="font-semibold text-ink">Getting Ready</span>{' '}
+          walks you through these steps, one short visit at a time — no deadlines, nothing required.
+        </p>
+
+        <p className="mt-10 inline-flex max-w-xl items-center gap-2 text-sm text-ink-soft">
           <Lock className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden="true" />
           Your binder is saved on this device. Nothing is sent anywhere unless you choose to share it.
         </p>

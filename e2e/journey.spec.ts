@@ -121,13 +121,13 @@ test('the example binder is recoverable and never clobbers the user’s data', a
   // …open the example…
   await page.goto('#/')
   await page.getByRole('button', { name: /See an example/ }).click()
-  await expect(page.getByText('You’re looking at Margaret’s example binder.')).toBeVisible()
+  await expect(page.getByText('You’re looking at Margaret’s example binder')).toBeVisible()
   await expect(page.locator('h1')).toHaveText("Margaret's Binder")
 
   // …and leave it: Harold's binder is intact.
   await page.getByRole('button', { name: 'Leave the example' }).click()
   await expect(page.locator('h1')).toHaveText("Harold's Binder")
-  await expect(page.getByText('You’re looking at Margaret’s example binder.')).not.toBeVisible()
+  await expect(page.getByText('You’re looking at Margaret’s example binder')).not.toBeVisible()
 
   expect(errors).toEqual([])
 })
