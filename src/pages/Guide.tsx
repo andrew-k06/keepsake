@@ -1,18 +1,24 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useStore } from '../store'
 import { STEPS, prepareProgress, pendingCelebration } from '../lib/prepare'
 import { NextStepCard } from '../components/NextStepCard'
 import { StepCelebration } from '../components/StepCelebration'
-import { Card } from '../components/ui'
-import { Compass, CircleCheckBig, HeartHandshake } from '../components/icons'
+import { Button, Card } from '../components/ui'
+import { Compass, CircleCheckBig, HeartHandshake, List } from '../components/icons'
 
 /**
  * Getting Ready — the guided path. One next step up top; the whole path below
  * in words and checkmarks (never percentages, dates, or red badges). Progress
  * is mostly DERIVED from the binder: the guide credits life, it doesn't audit it.
+ *
+ * Pace: the user chooses how to take this. "Little bites" (recommended) shows
+ * exactly one step per visit and tucks the whole path away — the antidote to
+ * "this is a lot". "Show me everything" keeps the full map open. Either way,
+ * nothing has a deadline.
  */
 export function Guide() {
-  const { state, startPath, setTogether, personById } = useStore()
+  const { state, startPath, setTogether, setPace, personById } = useStore()
+  const [pathOpen, setPathOpen] = useState(false)
 
   // Opening the guide starts (or resumes) the path — idempotent.
   useEffect(() => {
@@ -25,6 +31,8 @@ export function Guide() {
   const together = state.preparedness?.togetherWithId
   const togetherPerson = together ? personById(together) : undefined
   const helpers = state.people.filter((p) => p.role !== 'owner')
+  const pace = state.preparedness?.pace
+  const showWholePath = pace !== 'bites' || pathOpen
 
   // The welcome line names the last win, never the absence.
   const lastDone = Object.entries(state.preparedness?.steps ?? {})
@@ -50,6 +58,28 @@ export function Guide() {
         sounds enormous — into a handful of small visits, at your pace, and you’ve{' '}
         {progress.doneCount > 0 ? 'already done some of it' : 'got a gentle place to start'}.
       </p>
+
+      {/* Pace choice — asked once, changeable anytime, never a deadline */}
+      {!pace && (
+        <Card className="mt-5 border-sage/30 bg-sage/5 p-6">
+          <p className="text-lg font-semibold">How would you like to take this?</p>
+          <p className="mt-1 text-ink-soft">
+            There’s no wrong answer and no schedule — you can change your mind anytime.
+          </p>
+          <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+            <Button icon={Compass} onClick={() => setPace('bites')}>
+              Little bites — one step at a time
+            </Button>
+            <Button variant="secondary" icon={List} onClick={() => setPace('explore')}>
+              Show me everything — I’ll choose
+            </Button>
+          </div>
+          <p className="mt-3 text-sm text-ink-soft">
+            Most people pick little bites: one small step each visit, about ten minutes, and the
+            rest stays out of sight until you want it.
+          </p>
+        </Card>
+      )}
 
       {/* Words, not percentages */}
       {progress.doneCount > 0 && !progress.coreDone && (
@@ -86,6 +116,16 @@ export function Guide() {
         </div>
       )}
 
+      {/* Why we suggest starting here — the foundation, explained once */}
+      {progress.doneCount === 0 && progress.nextStep && (
+        <p className="mt-5 text-ink-soft">
+          <span className="font-semibold text-ink">Why we suggest starting here:</span> one story is
+          the foundation for everything else. It teaches you how Keepsake works in the most pleasant
+          way possible — and the wishes, the practical notes, and the printed book all build on the
+          treasures you add.
+        </p>
+      )}
+
       {/* The one card */}
       <div className="mt-5">
         {progress.coreDone ? (
@@ -113,47 +153,89 @@ export function Guide() {
         )}
       </div>
 
-      {/* The whole path */}
-      <h2 className="mt-10 text-2xl">The whole path</h2>
-      <div className="mt-4 space-y-4">
-        {progress.chapters.map(({ chapter, steps, done }) => (
-          <Card key={chapter.id} className={`p-5 ${done ? 'border-sage/40' : ''}`}>
-            <div className="flex items-baseline justify-between gap-3">
-              <h3 className="text-xl">
-                {chapter.title}
-                {chapter.ongoing && (
-                  <span className="ml-2 text-sm font-sans font-semibold text-ink-soft">ongoing</span>
-                )}
-              </h3>
-              {done && !chapter.ongoing && (
-                <span className="inline-flex shrink-0 items-center gap-1.5 text-sm font-semibold text-sage-deep">
-                  <CircleCheckBig className="h-4 w-4" strokeWidth={2.25} aria-hidden="true" />
-                  Done
-                </span>
-              )}
-            </div>
-            <p className="mt-1 text-sm text-ink-soft">{chapter.sub}</p>
-            <ul className="mt-3 space-y-2">
-              {steps.map(({ step, done: stepIsDone, skipped }) => (
-                <li key={step.id} className="flex items-center gap-2.5">
-                  {stepIsDone ? (
-                    <CircleCheckBig className="h-5 w-5 shrink-0 text-sage-deep" strokeWidth={2.25} aria-hidden="true" />
-                  ) : (
-                    <span
-                      className="h-5 w-5 shrink-0 rounded-full border-2 border-line-strong"
-                      aria-hidden="true"
-                    />
+      {/* Little bites: one step is the visit; the rest stays out of sight */}
+      {pace === 'bites' && !progress.coreDone && (
+        <p className="mt-3 text-sm text-ink-soft">
+          One step is plenty for a visit. The rest will be here when you come back.
+        </p>
+      )}
+
+      {/* The whole path — always one tap away, tucked away in bites mode */}
+      {showWholePath ? (
+        <>
+          <div className="mt-10 flex items-baseline justify-between gap-3">
+            <h2 className="text-2xl">The whole path</h2>
+            {pace === 'bites' && (
+              <button
+                onClick={() => setPathOpen(false)}
+                className="inline-flex min-h-11 items-center px-2 py-1 text-sm font-semibold text-ink-soft underline hover:text-ink"
+              >
+                Tuck it away again
+              </button>
+            )}
+          </div>
+          <div className="mt-4 space-y-4">
+            {progress.chapters.map(({ chapter, steps, done }) => (
+              <Card key={chapter.id} className={`p-5 ${done ? 'border-sage/40' : ''}`}>
+                <div className="flex items-baseline justify-between gap-3">
+                  <h3 className="text-xl">
+                    {chapter.title}
+                    {chapter.ongoing && (
+                      <span className="ml-2 text-sm font-sans font-semibold text-ink-soft">ongoing</span>
+                    )}
+                  </h3>
+                  {done && !chapter.ongoing && (
+                    <span className="inline-flex shrink-0 items-center gap-1.5 text-sm font-semibold text-sage-deep">
+                      <CircleCheckBig className="h-4 w-4" strokeWidth={2.25} aria-hidden="true" />
+                      Done
+                    </span>
                   )}
-                  <span className={stepIsDone ? '' : 'text-ink-soft'}>
-                    {step.title}
-                    {skipped && <span className="ml-2 text-sm">(set aside for now)</span>}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </Card>
-        ))}
-      </div>
+                </div>
+                <p className="mt-1 text-sm text-ink-soft">{chapter.sub}</p>
+                <ul className="mt-3 space-y-2">
+                  {steps.map(({ step, done: stepIsDone, skipped }) => (
+                    <li key={step.id} className="flex items-center gap-2.5">
+                      {stepIsDone ? (
+                        <CircleCheckBig className="h-5 w-5 shrink-0 text-sage-deep" strokeWidth={2.25} aria-hidden="true" />
+                      ) : (
+                        <span
+                          className="h-5 w-5 shrink-0 rounded-full border-2 border-line-strong"
+                          aria-hidden="true"
+                        />
+                      )}
+                      <span className={stepIsDone ? '' : 'text-ink-soft'}>
+                        {step.title}
+                        {skipped && <span className="ml-2 text-sm">(set aside for now)</span>}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </Card>
+            ))}
+          </div>
+          {pace === 'explore' && (
+            <p className="mt-3 text-sm text-ink-soft">
+              Prefer one step at a time?{' '}
+              <button
+                onClick={() => setPace('bites')}
+                className="font-semibold text-sage-deep underline hover:text-ink"
+              >
+                Switch to little bites
+              </button>
+            </p>
+          )}
+        </>
+      ) : (
+        pace === 'bites' && (
+          <button
+            onClick={() => setPathOpen(true)}
+            className="mt-8 inline-flex min-h-11 items-center gap-2 rounded-full border-2 border-line bg-white px-4 py-2 font-semibold text-ink-soft transition hover:border-sage hover:text-sage-deep"
+          >
+            <List className="h-5 w-5 shrink-0" strokeWidth={2} aria-hidden="true" />
+            Peek at the whole path
+          </button>
+        )
+      )}
 
       {/* Helper briefing — visible whenever family exists */}
       {helpers.length > 0 && progress.nextStep?.togetherScript && (

@@ -51,6 +51,8 @@ interface StoreApi {
   skipStep: (stepId: string) => void
   /** Mark the step the user just left the Guide to do (persists over reload). */
   setActiveStep: (stepId?: string) => void
+  /** How the user wants to take the path (little bites vs. see everything). */
+  setPace: (pace: 'bites' | 'explore') => void
   setTogether: (personId?: string) => void
   markCelebrated: (stepId: string) => void
   /** Record an activity line (prints, exports, checks) in the binder's history. */
@@ -578,6 +580,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         }),
       setActiveStep: (stepId) =>
         set((s) => ({ ...s, preparedness: { ...ensurePrep(s), activeStepId: stepId } })),
+      setPace: (pace) =>
+        set((s) =>
+          withAudit(
+            { ...s, preparedness: { ...ensurePrep(s), pace } },
+            pace === 'bites'
+              ? 'You chose to take the path in little bites'
+              : 'You chose to see the whole path at once',
+          ),
+        ),
       setTogether: (personId) =>
         set((s) => {
           const prep = ensurePrep(s)

@@ -149,6 +149,10 @@ export interface PreparednessState {
   /** Step the user is currently out doing (set when they leave the Guide via
       "Let's do it") — survives reload, unlike router state. */
   activeStepId?: string
+  /** How the user chose to take the path. 'bites' = one small step per visit,
+      whole path tucked away (the overwhelm antidote); 'explore' = show
+      everything. Unset = not asked yet. Presentation only — never a deadline. */
+  pace?: 'bites' | 'explore'
   steps: Record<string, { status: 'done' | 'skipped'; at: string; together?: boolean }>
   /** Step ids whose one-time celebration has already shown. */
   celebrated: string[]

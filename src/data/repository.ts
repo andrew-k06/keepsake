@@ -147,6 +147,7 @@ export function migrate(raw: unknown): BinderState | null {
       lastStepId: typeof p.lastStepId === 'string' ? p.lastStepId : undefined,
       togetherWithId: typeof p.togetherWithId === 'string' ? p.togetherWithId : undefined,
       activeStepId: typeof p.activeStepId === 'string' ? p.activeStepId : undefined,
+      pace: p.pace === 'bites' || p.pace === 'explore' ? p.pace : undefined,
       steps: (p.steps && typeof p.steps === 'object' ? p.steps : {}) as NonNullable<
         BinderState['preparedness']
       >['steps'],

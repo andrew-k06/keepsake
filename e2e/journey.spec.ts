@@ -172,6 +172,32 @@ test('backup export downloads a complete JSON file', async ({ page }) => {
   expect(errors).toEqual([])
 })
 
+test('pace choice: little bites tucks the path away and persists', async ({ page }) => {
+  const errors = errorsOf(page)
+  await page.goto('#/start')
+  await page.getByRole('radio', { name: 'It’s for me' }).click()
+  await page.getByPlaceholder('Margaret').fill('Ruth')
+  await page.getByRole('button', { name: 'Create my binder' }).click()
+  await expect(page.locator('h1')).toHaveText('Getting Ready')
+
+  // Fresh binder: asked once, with the why-start-here reasoning visible
+  await expect(page.getByText('How would you like to take this?')).toBeVisible()
+  await expect(page.getByText('Why we suggest starting here')).toBeVisible()
+  await page.getByRole('button', { name: /Little bites/ }).click()
+
+  // Bites mode: one card, path tucked away behind a peek
+  await expect(page.getByText('One step is plenty for a visit.')).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'The whole path' })).not.toBeVisible()
+  await page.getByRole('button', { name: 'Peek at the whole path' }).click()
+  await expect(page.getByRole('heading', { name: 'The whole path' })).toBeVisible()
+
+  // The choice persists across reload; the chooser never re-asks
+  await page.reload()
+  await expect(page.getByText('How would you like to take this?')).not.toBeVisible()
+  await expect(page.getByRole('button', { name: 'Peek at the whole path' })).toBeVisible()
+  expect(errors).toEqual([])
+})
+
 test('a real photo never receives a fabricated identification', async ({ page }) => {
   const errors = errorsOf(page)
   await page.goto('#/start')

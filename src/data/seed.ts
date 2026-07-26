@@ -48,6 +48,7 @@ export const seedState: BinderState = {
   preparedness: {
     startedAt: '2026-06-01T00:00:00.000Z',
     lastVisitAt: '2026-06-28T00:00:00.000Z',
+    pace: 'explore',
     steps: {},
     celebrated: [
       'story-first',
