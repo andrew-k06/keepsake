@@ -95,6 +95,25 @@ describe('migrate', () => {
     expect(out.preparedness!.celebrated).toEqual([])
   })
 
+  it('gives older binders the default Home place and attaches rooms to it', () => {
+    const out = migrate({
+      ownerName: 'M',
+      rooms: [{ id: 'r1', name: 'Living Room' }],
+      items: [],
+    })!
+    expect(out.places).toEqual([{ id: 'pl-home', name: 'Home', status: 'current' }])
+    expect(out.rooms[0].placeId).toBe('pl-home')
+    // binders that already have places keep them
+    const kept = migrate({
+      ownerName: 'M',
+      places: [{ id: 'pl-x', name: 'Lake House', status: 'leaving' }],
+      rooms: [{ id: 'r1', name: 'Dock', placeId: 'pl-x' }],
+      items: [],
+    })!
+    expect(kept.places![0].name).toBe('Lake House')
+    expect(kept.rooms[0].placeId).toBe('pl-x')
+  })
+
   it('folds legacy executor person-roles to viewer (the designation card is the mechanism)', () => {
     const out = migrate({
       ownerName: 'M',

@@ -7,6 +7,7 @@ import type {
   ItemDocument,
   ItemMemory,
   Person,
+  Place,
   Plan,
   EmergencyEntry,
   Room,
@@ -33,8 +34,14 @@ interface StoreApi {
   setItemPhoto: (itemId: string, dataUrl: string) => void
   addDocument: (itemId: string, doc: Omit<ItemDocument, 'id'>) => void
   removeDocument: (itemId: string, docId: string) => void
-  addRoom: (name: string) => string
+  addRoom: (name: string, placeId?: string) => string
   renameRoom: (roomId: string, name: string) => void
+  /** Places: the location layer (home, lake house, storage unit). */
+  addPlace: (name: string) => string
+  /** Mark a place as being left/sold — connected things flag for updating. */
+  setPlaceStatus: (placeId: string, status: Place['status']) => void
+  /** Remove a place once nothing points at it (its empty rooms go too). */
+  removePlace: (placeId: string) => void
   addPerson: (person: Omit<Person, 'id'>) => void
   updatePerson: (id: string, patch: Partial<Person>) => void
   /** Removes a person and clears any item wishes pointing at them. */
@@ -100,9 +107,10 @@ export function emptyBinder(ownerName: string, opts: { giftFrom?: string } = {})
     plan: opts.giftFrom
       ? { tier: 'binder', activatedAt: new Date().toISOString(), giftFrom: opts.giftFrom }
       : { tier: 'starter' },
+    places: [{ id: 'pl-home', name: 'Home', status: 'current' }],
     rooms: [
-      { id: 'living', name: 'Living Room' },
-      { id: 'bedroom', name: 'Bedroom' },
+      { id: 'living', name: 'Living Room', placeId: 'pl-home' },
+      { id: 'bedroom', name: 'Bedroom', placeId: 'pl-home' },
     ],
     items: [],
     trash: [],
@@ -416,16 +424,70 @@ export function StoreProvider({ children }: { children: ReactNode }) {
               : it,
           ),
         })),
-      addRoom: (name) => {
+      addRoom: (name, placeId) => {
         const newId = id('r')
+        set((s) => {
+          const home = (s.places ?? [])[0]?.id ?? 'pl-home'
+          return withAudit(
+            {
+              ...s,
+              rooms: [...s.rooms, { id: newId, name: name.trim(), placeId: placeId ?? home }],
+            },
+            `You added the room “${name.trim()}”`,
+          )
+        })
+        return newId
+      },
+      addPlace: (name) => {
+        const newId = id('pl')
         set((s) =>
           withAudit(
-            { ...s, rooms: [...s.rooms, { id: newId, name: name.trim() }] },
-            `You added the room “${name.trim()}”`,
+            {
+              ...s,
+              places: [
+                ...(s.places ?? [{ id: 'pl-home', name: 'Home', status: 'current' as const }]),
+                { id: newId, name: name.trim(), status: 'current' as const },
+              ],
+            },
+            `You added the place “${name.trim()}”`,
           ),
         )
         return newId
       },
+      setPlaceStatus: (placeId, status) =>
+        set((s) => {
+          const place = (s.places ?? []).find((p) => p.id === placeId)
+          if (!place) return s
+          return withAudit(
+            {
+              ...s,
+              places: (s.places ?? []).map((p) => (p.id === placeId ? { ...p, status } : p)),
+            },
+            status === 'leaving'
+              ? `You noted you’re leaving “${place.name}” — Keepsake will walk you through the updates`
+              : `You noted you’re staying at “${place.name}” after all`,
+          )
+        }),
+      removePlace: (placeId) =>
+        set((s) => {
+          const place = (s.places ?? []).find((p) => p.id === placeId)
+          if (!place) return s
+          const roomIds = new Set(
+            s.rooms.filter((r) => (r.placeId ?? 'pl-home') === placeId).map((r) => r.id),
+          )
+          // Refuse if anything still points here — the workflow resolves first.
+          const hasItems = s.items.some((it) => roomIds.has(it.roomId))
+          const hasNotes = s.emergency.some((e) => e.placeId === placeId)
+          if (hasItems || hasNotes) return s
+          return withAudit(
+            {
+              ...s,
+              places: (s.places ?? []).filter((p) => p.id !== placeId),
+              rooms: s.rooms.filter((r) => !roomIds.has(r.id)),
+            },
+            `“${place.name}” and its rooms were removed from the binder`,
+          )
+        }),
       renameRoom: (roomId, name) =>
         set((s) => {
           const room = s.rooms.find((r) => r.id === roomId)

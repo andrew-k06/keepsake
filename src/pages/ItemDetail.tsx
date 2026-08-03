@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useStore, money } from '../store'
 import { bestAmount, valueSourceLabel } from '../lib/value'
 import { routeAppraisal, tierTitle, reconcileAppraisalStatus } from '../lib/appraise'
+import { placeForRoom } from '../lib/places'
 import { compressImage } from '../lib/photo'
 import { TrendCard } from '../components/TrendCard'
 import { useConfirm } from '../components/Confirm'
@@ -91,6 +92,7 @@ export function ItemDetail() {
   }
   const heir = item.beneficiaryId ? personById(item.beneficiaryId) : undefined
   const room = roomById(item.roomId)
+  const itemPlace = placeForRoom(state, item.roomId)
 
   const assignHeir = (personId: string) =>
     updateItem(item.id, { beneficiaryId: personId || undefined })
@@ -181,6 +183,15 @@ export function ItemDetail() {
         <ChevronLeft className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
         Back{room ? ` to ${room.name}` : ''}
       </Link>
+
+      {itemPlace?.status === 'leaving' && (
+        <Link
+          to={`/place/${itemPlace.id}/leaving`}
+          className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-full border-2 border-amber-deep/50 bg-amber/15 px-4 py-2 font-semibold text-amber-deep hover:border-amber-deep"
+        >
+          Still listed at {itemPlace.name}, which you’re leaving — tap to update
+        </Link>
+      )}
 
       <div className="mt-5 grid gap-8 md:grid-cols-2">
         {/* Photo — always changeable: "I'll add a photo later" has a later */}

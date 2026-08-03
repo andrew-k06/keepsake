@@ -14,6 +14,7 @@ import { Emergency } from './pages/Emergency'
 import { Summary } from './pages/Summary'
 import { Plan } from './pages/Plan'
 import { OfferCheck } from './pages/OfferCheck'
+import { PlaceChange } from './pages/PlaceChange'
 
 // Leaf-weight routes load on demand — the common path never pays for them.
 const Guide = lazy(() => import('./pages/Guide').then((m) => ({ default: m.Guide })))
@@ -53,6 +54,7 @@ function App() {
         <Route path="/start" element={<Start />} />
         <Route path="/binder" element={<Home />} />
         <Route path="/room/:roomId" element={<Room />} />
+        <Route path="/place/:placeId/leaving" element={<PlaceChange />} />
         <Route path="/item/:itemId" element={<ItemDetail />} />
         <Route path="/add" element={<AddItem />} />
         <Route path="/family" element={<Family />} />

@@ -4,6 +4,7 @@ import { useStore, money } from '../store'
 import { bestAmount } from '../lib/value'
 import { prepareProgress } from '../lib/prepare'
 import { reconcileAppraisalStatus } from '../lib/appraise'
+import { placesOf, roomsOfPlace, pendingForPlace } from '../lib/places'
 import { storiesTold } from '../lib/selectors'
 import { Button, Card, AppraisalBadge } from '../components/ui'
 import { ItemCard } from '../components/ItemCard'
@@ -32,10 +33,13 @@ const VIEW_KEY = 'keepsake.recentView'
 const ORIENT_KEY = 'keepsake.orientationSeen'
 
 export function Home() {
-  const { state, itemsInRoom, restoreItem, addRoom } = useStore()
+  const { state, itemsInRoom, restoreItem, addRoom, addPlace, setPlaceStatus } = useStore()
   const navigate = useNavigate()
   const [addingRoom, setAddingRoom] = useState(false)
   const [roomName, setRoomName] = useState('')
+  const [roomPlaceId, setRoomPlaceId] = useState('')
+  const [addingPlace, setAddingPlace] = useState(false)
+  const [placeName, setPlaceName] = useState('')
   const [view, setView] = useState<ViewMode>(
     () => (localStorage.getItem(VIEW_KEY) as ViewMode) || 'tile',
   )
@@ -54,11 +58,18 @@ export function Home() {
         `${it.name} ${it.category} ${it.story}`.toLowerCase().includes(q),
       )
     : []
+  const places = placesOf(state)
   const saveRoom = () => {
     if (!roomName.trim()) return
-    addRoom(roomName)
+    addRoom(roomName, roomPlaceId || places[0]?.id)
     setRoomName('')
     setAddingRoom(false)
+  }
+  const savePlace = () => {
+    if (!placeName.trim()) return
+    addPlace(placeName)
+    setPlaceName('')
+    setAddingPlace(false)
   }
   const setViewMode = (v: ViewMode) => {
     setView(v)
@@ -185,19 +196,48 @@ export function Home() {
         )
       })()}
 
-      {/* Rooms */}
-      <div className="mt-12 flex items-center justify-between gap-4">
-        <h2 className="text-2xl">Rooms</h2>
-        {!addingRoom && (
-          <button
-            onClick={() => setAddingRoom(true)}
-            className="inline-flex min-h-11 items-center gap-1.5 px-2 py-2 font-semibold text-ink-soft hover:text-ink"
-          >
-            <Plus className="h-4 w-4" strokeWidth={2.25} aria-hidden="true" />
-            Add a room
-          </button>
-        )}
+      {/* Rooms — grouped by place when life spans more than one */}
+      <div className="mt-12 flex flex-wrap items-center justify-between gap-4">
+        <h2 className="text-2xl">{places.length > 1 ? 'Rooms & places' : 'Rooms'}</h2>
+        <div className="flex flex-wrap items-center gap-1">
+          {!addingRoom && (
+            <button
+              onClick={() => setAddingRoom(true)}
+              className="inline-flex min-h-11 items-center gap-1.5 px-2 py-2 font-semibold text-ink-soft hover:text-ink"
+            >
+              <Plus className="h-4 w-4" strokeWidth={2.25} aria-hidden="true" />
+              Add a room
+            </button>
+          )}
+          {!addingPlace && (
+            <button
+              onClick={() => setAddingPlace(true)}
+              className="inline-flex min-h-11 items-center gap-1.5 px-2 py-2 font-semibold text-ink-soft hover:text-ink"
+            >
+              <Plus className="h-4 w-4" strokeWidth={2.25} aria-hidden="true" />
+              Add a place
+            </button>
+          )}
+        </div>
       </div>
+      {addingPlace && (
+        <Card className="mt-3 flex flex-wrap items-center gap-3 p-4">
+          <input
+            className="min-w-48 flex-1 rounded-2xl border-2 border-line bg-white px-4 py-3 text-lg outline-none focus:border-clay"
+            value={placeName}
+            autoFocus
+            onChange={(e) => setPlaceName(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && savePlace()}
+            placeholder="The lake house, a storage unit, Mom’s apartment…"
+          />
+          <Button variant="ghost" onClick={() => setAddingPlace(false)}>
+            Cancel
+          </Button>
+          <Button onClick={savePlace} disabled={!placeName.trim()}>
+            Add it
+          </Button>
+        </Card>
+      )}
       {addingRoom && (
         <Card className="mt-3 flex flex-wrap items-center gap-3 p-4">
           <input
@@ -208,6 +248,20 @@ export function Home() {
             onKeyDown={(e) => e.key === 'Enter' && saveRoom()}
             placeholder="Kitchen, Study, The Attic…"
           />
+          {places.length > 1 && (
+            <select
+              aria-label="At which place?"
+              className="rounded-2xl border-2 border-line bg-white px-3 py-3 font-semibold outline-none focus:border-clay"
+              value={roomPlaceId || places[0].id}
+              onChange={(e) => setRoomPlaceId(e.target.value)}
+            >
+              {places.map((pl) => (
+                <option key={pl.id} value={pl.id}>
+                  {pl.name}
+                </option>
+              ))}
+            </select>
+          )}
           <Button variant="ghost" onClick={() => setAddingRoom(false)}>
             Cancel
           </Button>
@@ -216,34 +270,69 @@ export function Home() {
           </Button>
         </Card>
       )}
-      <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {state.rooms.map((room) => {
-          const count = itemsInRoom(room.id).length
-          const Icon = roomIcon(room.name)
-          return (
-            <Link
-              key={room.id}
-              to={`/room/${room.id}`}
-              className="group flex items-center gap-4 rounded-3xl bg-white border border-line p-5 shadow-soft transition hover:-translate-y-0.5 hover:shadow-lift hover:border-line-strong"
-            >
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-cream-deep text-clay">
-                <Icon className="h-6 w-6" strokeWidth={1.75} aria-hidden="true" />
-              </span>
-              <div className="min-w-0 flex-1">
-                <div className="text-lg font-semibold leading-snug">{room.name}</div>
-                <div className="text-ink-soft">
-                  {count} item{count === 1 ? '' : 's'}
-                </div>
+      {places.map((pl) => {
+        const rooms = roomsOfPlace(state, pl.id)
+        if (places.length === 1 && rooms.length === 0) return null
+        const pending = pl.status === 'leaving' ? pendingForPlace(state, pl.id) : null
+        return (
+          <div key={pl.id} className={places.length > 1 ? 'mt-6' : 'mt-4'}>
+            {places.length > 1 && (
+              <div className="flex flex-wrap items-center gap-3">
+                <h3 className="text-xl">{pl.name}</h3>
+                {pl.status === 'leaving' ? (
+                  <Link
+                    to={`/place/${pl.id}/leaving`}
+                    className="inline-flex min-h-11 items-center gap-1.5 rounded-full border-2 border-amber-deep/50 bg-amber/15 px-3 py-1 text-sm font-semibold text-amber-deep hover:border-amber-deep"
+                  >
+                    Being updated — {pending!.total} thing{pending!.total === 1 ? '' : 's'} left
+                  </Link>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setPlaceStatus(pl.id, 'leaving')
+                      navigate(`/place/${pl.id}/leaving`)
+                    }}
+                    className="inline-flex min-h-11 items-center px-2 py-1 text-sm font-semibold text-ink-soft underline hover:text-ink"
+                  >
+                    Moving or selling this place?
+                  </button>
+                )}
               </div>
-              <ChevronRight
-                className="h-5 w-5 shrink-0 text-ink-soft transition group-hover:text-clay-dark"
-                strokeWidth={2}
-                aria-hidden="true"
-              />
-            </Link>
-          )
-        })}
-      </div>
+            )}
+            <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {rooms.map((room) => {
+                const count = itemsInRoom(room.id).length
+                const Icon = roomIcon(room.name)
+                return (
+                  <Link
+                    key={room.id}
+                    to={`/room/${room.id}`}
+                    className="group flex items-center gap-4 rounded-3xl bg-white border border-line p-5 shadow-soft transition hover:-translate-y-0.5 hover:shadow-lift hover:border-line-strong"
+                  >
+                    <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-cream-deep text-clay">
+                      <Icon className="h-6 w-6" strokeWidth={1.75} aria-hidden="true" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-lg font-semibold leading-snug">{room.name}</div>
+                      <div className="text-ink-soft">
+                        {count} item{count === 1 ? '' : 's'}
+                      </div>
+                    </div>
+                    <ChevronRight
+                      className="h-5 w-5 shrink-0 text-ink-soft transition group-hover:text-clay-dark"
+                      strokeWidth={2}
+                      aria-hidden="true"
+                    />
+                  </Link>
+                )
+              })}
+              {rooms.length === 0 && (
+                <p className="text-ink-soft">No rooms here yet.</p>
+              )}
+            </div>
+          </div>
+        )
+      })}
 
       {/* Find anything — search across every item; no memory of rooms needed */}
       {state.items.length > 0 && (

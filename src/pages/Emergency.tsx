@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useStore } from '../store'
 import { EMERGENCY_SECTIONS, sectionById } from '../lib/emergency'
+import { Link } from 'react-router-dom'
+import { placesOf, placeById } from '../lib/places'
 import { Button, Card, Field, inputClass } from '../components/ui'
 import { GuideReturnPill } from '../components/GuideReturnPill'
 import { useConfirm } from '../components/Confirm'
@@ -23,6 +25,7 @@ export function Emergency() {
   const [labelError, setLabelError] = useState('')
   const [detail, setDetail] = useState('')
   const [preparedOn, setPreparedOn] = useState('')
+  const [notePlace, setNotePlace] = useState('')
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editDetail, setEditDetail] = useState('')
   const [editPreparedOn, setEditPreparedOn] = useState('')
@@ -45,10 +48,12 @@ export function Emergency() {
       detail,
       sectionId,
       preparedOn: preparedOn.trim() || undefined,
+      placeId: notePlace || undefined,
     })
     setLabel('')
     setDetail('')
     setPreparedOn('')
+    setNotePlace('')
     setAdding(false)
   }
 
@@ -79,6 +84,7 @@ export function Emergency() {
 
   const activeSection = sectionById(sectionId)
   const orphans = state.emergency.filter((e) => !sectionById(e.sectionId))
+  const places = placesOf(state)
 
   const NoteCard = ({ e }: { e: EmergencyEntry }) => {
     const sec = sectionById(e.sectionId)
@@ -124,6 +130,20 @@ export function Emergency() {
             {e.preparedOn && (
               <p className="mt-1 text-sm text-ink-soft">Prepared/updated: {e.preparedOn}</p>
             )}
+            {(() => {
+              const pl = placeById(state, e.placeId)
+              if (!pl) return null
+              return pl.status === 'leaving' ? (
+                <Link
+                  to={`/place/${pl.id}/leaving`}
+                  className="mt-2 inline-flex min-h-11 items-center rounded-full border-2 border-amber-deep/50 bg-amber/15 px-3 py-1 text-sm font-semibold text-amber-deep hover:border-amber-deep"
+                >
+                  Tied to {pl.name} — needs updating
+                </Link>
+              ) : (
+                <p className="mt-1 text-sm text-ink-soft">Tied to {pl.name}</p>
+              )
+            })()}
           </>
         )}
       </div>
@@ -220,6 +240,25 @@ export function Emergency() {
                 onChange={(e) => setPreparedOn(e.target.value)}
                 placeholder="e.g. March 2023"
               />
+            </Field>
+          )}
+          {places.length > 1 && (
+            <Field
+              label="Tied to a place? (optional)"
+              hint="A utility bill, an insurance policy, a deed — tying it to the place means that if you ever sell or move, Keepsake flags this note for updating."
+            >
+              <select
+                className={inputClass}
+                value={notePlace}
+                onChange={(e) => setNotePlace(e.target.value)}
+              >
+                <option value="">Not tied to a place</option>
+                {places.map((pl) => (
+                  <option key={pl.id} value={pl.id}>
+                    {pl.name}
+                  </option>
+                ))}
+              </select>
             </Field>
           )}
           <div className="mt-4 flex justify-end gap-3">

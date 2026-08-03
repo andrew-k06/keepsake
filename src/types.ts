@@ -90,9 +90,24 @@ export interface Item {
   deletedAt?: string
 }
 
+/** A place the household's life touches: the home, a lake house, a storage
+    unit, a safe-deposit box. Rooms belong to a place; emergency notes can be
+    tied to one (the utility bill, the insurance policy, the deed). When a
+    place is sold or left, everything still pointing at it gets flagged and a
+    gentle update workflow walks through it — the field-test scenario of
+    "we sold a home and had a lot of binder updates to make". */
+export interface Place {
+  id: string
+  name: string
+  /** 'leaving' = sold/moving out — connected things need updating until resolved. */
+  status: 'current' | 'leaving'
+}
+
 export interface Room {
   id: string
   name: string
+  /** Which place this room is at. Older binders default to the Home place. */
+  placeId?: string
   emoji?: string // DEPRECATED: legacy placeholder. No longer rendered — kept for back-compat.
 }
 
@@ -103,6 +118,9 @@ export interface EmergencyEntry {
   /** Which chapter of the guide this belongs to (lib/emergency.ts sections).
       Absent on older notes — they display under "Other notes". */
   sectionId?: string
+  /** Optional tie to a Place — "the electric bill for the lake house". When
+      that place is being left, this note is flagged for updating. */
+  placeId?: string
   /** Free-text date the underlying document was prepared or last updated
       ("March 2023"). Optional; asked only in sections holding dated legal
       papers. Never parsed — never used for reminders (no-nagging rule). */
@@ -165,6 +183,7 @@ export interface BinderState {
   ownerName: string
   binderName: string
   plan: Plan
+  places?: Place[]
   rooms: Room[]
   items: Item[]
   /** Soft-deleted items, restorable for 30 days. */

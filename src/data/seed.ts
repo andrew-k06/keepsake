@@ -15,11 +15,12 @@ export const seedState: BinderState = {
   // The demo shows the full product — Sarah set it up as a gift and pays for
   // the Family Plan (market watching), so every feature is visible.
   plan: { tier: 'family', activatedAt: '2026-05-14T00:00:00.000Z', giftFrom: 'Sarah' },
+  places: [{ id: 'pl-home', name: 'Home', status: 'current' }],
   rooms: [
-    { id: 'living', name: 'Living Room' },
-    { id: 'bedroom', name: 'Bedroom' },
-    { id: 'safe', name: 'The Safe' },
-    { id: 'garage', name: 'Garage' },
+    { id: 'living', name: 'Living Room', placeId: 'pl-home' },
+    { id: 'bedroom', name: 'Bedroom', placeId: 'pl-home' },
+    { id: 'safe', name: 'The Safe', placeId: 'pl-home' },
+    { id: 'garage', name: 'Garage', placeId: 'pl-home' },
   ],
   people: [
     { id: 'p-self', name: 'Margaret Ellison', relationship: 'Me', role: 'owner', color: '#c2603d' },

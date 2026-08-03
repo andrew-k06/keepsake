@@ -155,12 +155,23 @@ export function migrate(raw: unknown): BinderState | null {
     }
   }
 
+  // Places: older binders predate the location layer — give them the default
+  // Home place and attach every unassigned room to it.
+  const places: BinderState['places'] =
+    Array.isArray(s.places) && (s.places as unknown[]).length > 0
+      ? (s.places as BinderState['places'])
+      : [{ id: 'pl-home', name: 'Home', status: 'current' }]
+  const rooms = (s.rooms as BinderState['rooms']).map((r) =>
+    r.placeId ? r : { ...r, placeId: 'pl-home' },
+  )
+
   return {
     isDemo: s.isDemo === true,
     ownerName: String(s.ownerName ?? 'Friend'),
     binderName: String(s.binderName ?? 'My Binder'),
     plan: (s.plan as BinderState['plan']) ?? { tier: 'starter' },
-    rooms: s.rooms as BinderState['rooms'],
+    places,
+    rooms,
     items,
     trash,
     people: ((s.people as BinderState['people']) ?? []).map((p2) =>

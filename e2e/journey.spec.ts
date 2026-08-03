@@ -275,6 +275,75 @@ test('insured attestation survives reload and prints truthfully everywhere', asy
   expect(errors).toEqual([])
 })
 
+test('sold-house workflow: places, flags, and the update walk-through', async ({ page }) => {
+  const errors = errorsOf(page)
+
+  // Fresh binder with one item at Home
+  await page.goto('#/start')
+  await page.getByRole('radio', { name: 'It’s for me' }).click()
+  await page.getByPlaceholder('Margaret').fill('Ruth')
+  await page.getByRole('button', { name: 'Create my binder' }).click()
+  await page.getByRole('button', { name: /Little bites/ }).click()
+  await page.getByRole('button', { name: 'Let’s do it' }).click()
+  await page.getByRole('button', { name: /add a photo later/ }).click()
+  await page.locator('input').first().fill('Adirondack Chairs')
+  await page.getByRole('button', { name: 'Save to my binder' }).click()
+  await expect(page.locator('h1')).toHaveText('Adirondack Chairs')
+
+  // Add the Lake House place + a room there; move the chairs to it
+  await page.goto('#/binder')
+  await page.getByRole('button', { name: 'Add a place' }).click()
+  await page.getByPlaceholder(/lake house, a storage unit/).fill('Lake House')
+  await page.getByRole('button', { name: 'Add it' }).click()
+  await expect(page.getByRole('heading', { name: 'Lake House' })).toBeVisible()
+  await page.getByRole('button', { name: 'Add a room' }).click()
+  await page.getByPlaceholder('Kitchen, Study, The Attic…').fill('The Porch')
+  await page.getByLabel('At which place?').selectOption({ label: 'Lake House' })
+  await page.getByRole('button', { name: 'Add it' }).click()
+  await page.getByRole('link', { name: /Adirondack Chairs/ }).first().click()
+  await page.getByRole('button', { name: 'Edit details' }).click()
+  await page.locator('select').nth(1).selectOption({ label: 'The Porch' })
+  await page.getByRole('button', { name: 'Save changes' }).click()
+
+  // Tie an emergency note to the Lake House
+  await page.goto('#/emergency')
+  await page.getByRole('button', { name: 'Add a note' }).click()
+  await page.getByLabel('Which part of the guide?').selectOption({ label: 'Money & accounts' })
+  await page.getByLabel('What is it?').fill('Lake house electric bill')
+  await page.getByLabel(/Tied to a place/).selectOption({ label: 'Lake House' })
+  await page.getByRole('button', { name: 'Save note' }).click()
+
+  // Sell the lake house: everything connected is flagged and walked through
+  await page.goto('#/binder')
+  await page
+    .getByRole('heading', { name: 'Lake House' })
+    .locator('..')
+    .getByRole('button', { name: 'Moving or selling this place?' })
+    .click()
+  await expect(page.locator('h1')).toHaveText('Leaving Lake House')
+  await expect(page.getByText('Adirondack Chairs')).toBeVisible()
+  await expect(page.getByText('Lake house electric bill')).toBeVisible()
+
+  // The chairs moved back Home; the bill is no longer needed
+  await page.getByRole('button', { name: 'It moved' }).click()
+  await page.locator('select').first().selectOption({ label: 'Living Room — Home' })
+  await page.getByRole('button', { name: 'That’s where it is now' }).click()
+  await page.getByRole('button', { name: 'No longer needed' }).click()
+  await page.getByRole('button', { name: 'Delete it' }).click()
+
+  // Done: remove the place; Home shows no Lake House group anymore
+  await expect(page.getByText('has a new home in the binder')).toBeVisible()
+  await page.getByRole('button', { name: 'Remove Lake House from the binder' }).click()
+  await page.getByRole('button', { name: 'Remove it' }).click()
+  await expect(page.locator('h1').first()).toContainText('Ruth')
+  await expect(page.getByRole('heading', { name: 'Lake House' })).not.toBeVisible()
+  // The chairs live on, at Home
+  await page.getByPlaceholder(/Search by name, category/).fill('Adirondack')
+  await expect(page.getByRole('link', { name: /Adirondack Chairs/ }).first()).toBeVisible()
+
+  expect(errors).toEqual([])
+})
+
 test('gift flow lands on the guide in Together mode', async ({ page }) => {
   const errors = errorsOf(page)
   await page.goto('#/start')
